@@ -1,6 +1,8 @@
 const STORAGE_KEY = 'lan_share_server'
 const STORAGE_SHARED_SEEN = 'lan_share_seen_shared'
+const STORAGE_DOWNLOADS = 'lan_share_downloaded'
 const DEFAULT_HTTP_PORT = 8787
+const FETCH_TIMEOUT_MS = 8000
 
 const $ = (sel) => document.querySelector(sel)
 const $$ = (sel) => document.querySelectorAll(sel)
@@ -19,7 +21,57 @@ let connected = false
 let connectedPeer = null
 let activeRemoteClients = []
 let loading = false
+let loadSeq = 0
+let lastFileItems = null
+let lastTransferJson = ''
+let downloadRegistry = {}
 let seenShared = new Set()
+
+function loadDownloadRegistry() {
+  try {
+    downloadRegistry = JSON.parse(localStorage.getItem(STORAGE_DOWNLOADS) || '{}')
+  } catch {
+    downloadRegistry = {}
+  }
+}
+
+function saveDownloadRegistry() {
+  localStorage.setItem(STORAGE_DOWNLOADS, JSON.stringify(downloadRegistry))
+}
+
+function fileRecordKey(rootKey, rel, mtime) {
+  return `${rootKey}/${rel}:${mtime || 0}`
+}
+
+function serverFullPath(rootKey, rel) {
+  const r = String(rel || '').replace(/^\/+/, '')
+  return r ? `${rootKey}/${r}` : rootKey
+}
+
+function localSavePath(name) {
+  return `/storage/emulated/0/Download/${name}`
+}
+
+function getDownloadRecord(rootKey, rel, mtime) {
+  return downloadRegistry[fileRecordKey(rootKey, rel, mtime)] || null
+}
+
+function markDownloaded(rootKey, rel, mtime, name) {
+  const key = fileRecordKey(rootKey, rel, mtime)
+  downloadRegistry[key] = {
+    serverPath: serverFullPath(rootKey, rel),
+    localPath: localSavePath(name),
+    name,
+    savedAt: Date.now(),
+  }
+  saveDownloadRegistry()
+}
+
+function fetchWithTimeout(url, opts = {}, ms = FETCH_TIMEOUT_MS) {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), ms)
+  return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(timer))
+}
 
 function loadSeenShared() {
   try {
@@ -95,57 +147,18 @@ function setStatus(online, text) {
   bar.classList.toggle('offline', !online)
 }
 
-function folderContextLabel() {
-  const D = window.LanShareDevice
+function shortTabLabel() {
   const isHost = !!pageServerOrigin()
-  const localType = isHost ? 'desktop' : (window.LanShareSettings?.readClientSettings?.()?.deviceType || D?.detectClientDeviceType?.() || 'phone')
-  const localLabel = D?.deviceMeta?.(localType)?.label || '本机'
-  const remoteLabel = isHost ? '手机/平板' : (connectedPeer ? D?.deviceMeta?.(D.peerDeviceType(connectedPeer))?.label : '对方')
-  if (root === 'uploads') {
-    return isHost
-      ? `${remoteLabel} → 本机 · 对方发来的文件`
-      : `本机(${localLabel}) → 对方(${remoteLabel}) · 我发出的文件`
-  }
-  return isHost
-    ? `本机(${localLabel}) → ${remoteLabel} · 共享给对方`
-    : `对方(${remoteLabel}) → 本机(${localLabel}) · 发给我的文件`
+  if (root === 'uploads') return isHost ? '收到的文件' : '我发出的'
+  return isHost ? '共享给对方' : '发给我的'
 }
 
 function updatePathBar() {
-  const label = folderContextLabel()
   const sub = subPath === '/' ? '' : subPath
-  $('#path-label').textContent = label + sub
+  $('#path-label').textContent = `${shortTabLabel()}${sub}`
   $('#btn-back').disabled = subPath === '/'
   const ctx = $('#transfer-context')
-  if (ctx && connected) {
-    ctx.textContent = label
-    ctx.classList.remove('hidden')
-  }
-}
-
-function renderPeerCard(role, peer, opts = {}) {
-  const D = window.LanShareDevice
-  const waiting = !!opts.waiting
-  const type = waiting ? 'unknown' : D.peerDeviceType(peer)
-  const meta = waiting ? { label: '等待连接', icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>' } : D.deviceMeta(type)
-  const brand = waiting ? '' : D.peerDeviceBrand(peer)
-  const brandMeta = D.brandMeta(brand)
-  const name = waiting ? (opts.hint || '暂无设备') : D.deviceDisplayName(peer)
-  const subtitle = waiting ? '同一 WiFi 打开 App 即可连入' : D.peerDeviceSubtitle(peer)
-  return `
-    <div class="transfer-peer ${opts.side || ''} ${waiting ? 'waiting' : `type-${type}`}">
-      <span class="transfer-peer-role">${escapeHtml(role)}</span>
-      <div class="transfer-peer-body">
-        <div class="discover-icon ${waiting ? 'waiting' : `type-${type}`}">${meta.icon}</div>
-        <div class="transfer-peer-text">
-          <strong>${escapeHtml(name)}</strong>
-          <span>${escapeHtml(subtitle)}</span>
-          ${!waiting && brand ? `<span class="brand-chip sm" style="--brand-color:${brandMeta.color};--brand-soft:${brandMeta.soft}">${escapeHtml(brand)}</span>` : ''}
-          ${!waiting && peer?.ip ? `<span class="transfer-peer-ip">${escapeHtml(peer.ip)}:${peer.port || DEFAULT_HTTP_PORT}</span>` : ''}
-        </div>
-      </div>
-    </div>
-  `
+  if (ctx) ctx.classList.add('hidden')
 }
 
 function getLocalPeerView() {
@@ -179,45 +192,41 @@ function getRemotePeerView() {
   return connectedPeer
 }
 
+function renderCompactPeer(peer, role, waiting, hint) {
+  const D = window.LanShareDevice
+  if (waiting || !peer) {
+    return `<div class="xfer-node waiting"><span class="xfer-role">${escapeHtml(role)}</span><span class="xfer-name">${escapeHtml(hint || '等待连接')}</span></div>`
+  }
+  const type = D.peerDeviceType(peer)
+  const meta = D.deviceMeta(type)
+  const name = D.deviceDisplayName(peer)
+  return `<div class="xfer-node type-${type}"><span class="xfer-role">${escapeHtml(role)}</span><span class="xfer-type">${meta.label}</span><span class="xfer-name">${escapeHtml(name)}</span></div>`
+}
+
 function renderTransferBar() {
   const el = $('#connected-device')
-  const ctx = $('#transfer-context')
   if (!el) return
   if (!connected) {
     el.classList.add('hidden')
     el.innerHTML = ''
-    ctx?.classList.add('hidden')
     return
   }
   const local = getLocalPeerView()
   const remote = getRemotePeerView()
   const isHost = !!pageServerOrigin()
-  const switchLabel = isHost ? '刷新连接' : '切换对方'
+  const remoteName = remote ? window.LanShareDevice.deviceDisplayName(remote) : ''
   el.classList.remove('hidden')
+  el.className = 'transfer-bar xfer-compact'
   el.innerHTML = `
-    <div class="transfer-bar-inner">
-      ${renderPeerCard('本机', local, { side: 'local' })}
-      <div class="transfer-arrow" aria-hidden="true">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
-      </div>
-      ${renderPeerCard('对方', remote, {
-        side: 'remote',
-        waiting: !remote,
-        hint: isHost ? '等待手机/平板' : '未连接',
-      })}
-    </div>
-    <button type="button" class="btn-switch-peer" id="btn-switch-device">${switchLabel}</button>
+    ${renderCompactPeer(local, '本机', false)}
+    <span class="xfer-arrow" aria-hidden="true">⇄</span>
+    ${renderCompactPeer(remote, '对方', !remote, isHost ? '等待手机' : '未连接')}
+    <button type="button" class="xfer-switch" id="btn-switch-device">${isHost ? '刷新' : '切换'}</button>
   `
-  if (ctx) {
-    ctx.textContent = folderContextLabel()
-    ctx.classList.remove('hidden')
-  }
-  setStatus(true, remote
-    ? `与 ${window.LanShareDevice.deviceDisplayName(remote)} 互传中`
-    : (isHost ? '服务运行中，等待连接' : '已连接'))
+  setStatus(true, remoteName ? `与 ${remoteName} 互传` : (isHost ? '等待连接' : '已连接'))
   $('#btn-switch-device')?.addEventListener('click', () => {
     vibrate()
-    if (isHost) refreshRemoteClients().then(() => toast(activeRemoteClients.length ? '已更新连接设备' : '暂无手机/平板连入'))
+    if (isHost) refreshRemoteClients().then(() => toast(activeRemoteClients.length ? '已更新' : '暂无设备连入'))
     else showSetup()
   })
 }
@@ -245,7 +254,10 @@ function confirmAction(msg) {
 function clearLocalRecords() {
   localStorage.removeItem(STORAGE_KEY)
   localStorage.removeItem(STORAGE_SHARED_SEEN)
+  localStorage.removeItem(STORAGE_DOWNLOADS)
   seenShared = new Set()
+  downloadRegistry = {}
+  lastFileItems = null
   server = ''
   connected = false
   connectedPeer = null
@@ -561,13 +573,10 @@ function showMain() {
 }
 
 function updateTitle() {
-  $('#top-title').textContent = connected ? folderContextLabel() : '互传文件'
+  $('#top-title').textContent = connected ? shortTabLabel() : '互传文件'
   const hint = $('#shared-hint')
   if (hint) {
-    const isHost = !!pageServerOrigin()
-    hint.textContent = isHost
-      ? '对方设备可在 shared 文件夹取文件；新文件会自动出现在列表'
-      : '电脑放入 shared 文件夹的新文件会自动保存到本机「下载」'
+    hint.textContent = '新文件会自动保存到手机存储 /storage/emulated/0/Download/文件名'
     hint.classList.toggle('hidden', root !== 'shared')
   }
 }
@@ -618,7 +627,8 @@ async function deleteItem(rel, name, isDir) {
     if (!res.ok) throw new Error(data.error || '删除失败')
     toast(`已删除：${name}`)
     vibrate(8)
-    await loadFiles()
+    lastFileItems = null
+    await loadFiles({ silent: true })
     return true
   } catch (e) {
     toastErr(e.message || '删除失败')
@@ -627,7 +637,7 @@ async function deleteItem(rel, name, isDir) {
 }
 
 async function clearCurrentFolder() {
-  const label = folderContextLabel()
+  const label = shortTabLabel()
   const folder = subPath === '/' ? label : `${label}${subPath}`
   if (!confirmAction(`确定清空「${folder}」下的全部内容？\n此操作会删除电脑上的文件，不可恢复。`)) return
   try {
@@ -643,7 +653,8 @@ async function clearCurrentFolder() {
     if (!res.ok) throw new Error(data.error || '清空失败')
     toast(data.count ? `已清空 ${data.count} 项` : '当前文件夹已为空')
     vibrate(10)
-    await loadFiles()
+    lastFileItems = null
+    await loadFiles({ silent: true })
   } catch (e) {
     toastErr(e.message || '清空失败')
   }
@@ -655,133 +666,133 @@ function updateClearFolderBtn(hasItems) {
   btn.classList.toggle('hidden', !connected || !hasItems)
 }
 
-async function loadFiles() {
-  if (loading) return
-  loading = true
-  showSkeleton()
+async function loadFiles(opts = {}) {
+  const seq = ++loadSeq
+  const silent = !!opts.silent
+  if (!silent && !lastFileItems) showSkeleton()
+  else if (lastFileItems) renderFileList(lastFileItems)
   updatePathBar()
   try {
     const q = subPath === '/' ? '' : encodePathSegments(subPath)
-    const res = await fetch(api(`/api/browse/${root}${q ? '/' + q : ''}`))
+    const res = await fetchWithTimeout(api(`/api/browse/${root}${q ? '/' + q : ''}`), { cache: 'no-store' })
     const data = await res.json()
+    if (seq !== loadSeq) return
     if (!res.ok) throw new Error(data.error || '加载失败')
-
-    const list = $('#file-list')
-    if (!data.items.length) {
-      list.innerHTML = renderEmpty('暂无文件')
-      updateClearFolderBtn(false)
-      return
-    }
-
-    updateClearFolderBtn(true)
-    list.innerHTML = ''
-    const frag = document.createDocumentFragment()
-    for (const it of data.items) {
-      const row = document.createElement('div')
-      row.className = 'file-item'
-      const rel = it.rel || it.path.replace(`/browse/${root}`, '').replace(/^\//, '')
-      const isDir = it.isDir
-
-      row.innerHTML = `
-        <div class="file-icon ${isDir ? 'dir' : 'file'}">${isDir ? ICONS.folder : ICONS.file}</div>
-        <div class="file-meta">
-          <div class="file-name">${escapeHtml(it.name)}</div>
-          <div class="file-size">${isDir ? '文件夹' : fmtSize(it.size)}</div>
-        </div>
-      `
-
-      if (isDir) {
-        row.insertAdjacentHTML('beforeend', ICONS.chevron)
-        row.onclick = () => {
-          vibrate()
-          subPath = rel.endsWith('/') ? rel : rel + '/'
-          if (!subPath.startsWith('/')) subPath = '/' + subPath
-          loadFiles()
-        }
-        const actions = document.createElement('div')
-        actions.className = 'file-actions'
-        const delBtn = document.createElement('button')
-        delBtn.className = 'file-action danger'
-        delBtn.textContent = '删除'
-        delBtn.onclick = async (e) => {
-          e.stopPropagation()
-          await deleteItem(rel, it.name, true)
-        }
-        actions.appendChild(delBtn)
-        row.appendChild(actions)
-      } else {
-        const actions = document.createElement('div')
-        actions.className = 'file-actions'
-        const btn = document.createElement('button')
-        btn.className = 'file-action'
-        btn.textContent = root === 'shared' ? '保存' : '下载'
-        btn.onclick = async (e) => {
-          e.stopPropagation()
-          vibrate()
-          const dl = it.downloadUrl || `/api/download/${root}?p=${encodeURIComponent(rel)}`
-          markSharedSeen(`${rel}:${it.mtime}`)
-          await downloadFile(dl, it.name)
-        }
-        const delBtn = document.createElement('button')
-        delBtn.className = 'file-action danger'
-        delBtn.textContent = '删除'
-        delBtn.onclick = async (e) => {
-          e.stopPropagation()
-          await deleteItem(rel, it.name, false)
-        }
-        actions.appendChild(btn)
-        actions.appendChild(delBtn)
-        row.appendChild(actions)
-      }
-      frag.appendChild(row)
-    }
-    list.appendChild(frag)
+    lastFileItems = data.items || []
+    renderFileList(lastFileItems)
     connected = true
     $('#status-bar').classList.remove('offline')
   } catch (e) {
-    $('#file-list').innerHTML = renderEmpty(e.message, true)
-    $('#btn-retry')?.addEventListener('click', showSetup)
-    setStatus(false, '连接断开')
-    connected = false
+    if (seq !== loadSeq) return
+    if (lastFileItems?.length) {
+      toastErr(e.name === 'AbortError' ? '加载超时，显示上次结果' : (e.message || '刷新失败'))
+      return
+    }
+    $('#file-list').innerHTML = renderEmpty(e.name === 'AbortError' ? '加载超时，请点刷新重试' : e.message, true)
+    $('#btn-retry')?.addEventListener('click', () => loadFiles({ silent: false }))
+    setStatus(false, '连接异常')
     updateClearFolderBtn(false)
-  } finally {
-    loading = false
   }
 }
 
-async function downloadFile(path, name, auto = false) {
+function renderFileList(items) {
+  const list = $('#file-list')
+  if (!items.length) {
+    list.innerHTML = renderEmpty('暂无文件')
+    updateClearFolderBtn(false)
+    return
+  }
+  updateClearFolderBtn(true)
+  list.innerHTML = ''
+  const frag = document.createDocumentFragment()
+  for (const it of items) {
+    const row = document.createElement('div')
+    row.className = 'file-item'
+    const rel = it.rel || it.path.replace(`/browse/${root}`, '').replace(/^\//, '')
+    const isDir = it.isDir
+    const fullPath = serverFullPath(root, rel)
+    const dlRec = !isDir ? getDownloadRecord(root, rel, it.mtime) : null
+    const downloaded = !!dlRec
+
+    row.innerHTML = `
+      <div class="file-icon ${isDir ? 'dir' : 'file'}">${isDir ? ICONS.folder : ICONS.file}</div>
+      <div class="file-meta">
+        <div class="file-name-row">
+          <div class="file-name">${escapeHtml(it.name)}</div>
+          ${downloaded ? '<span class="file-badge done">已下载</span>' : ''}
+        </div>
+        <div class="file-path" title="${escapeHtml(fullPath)}">${escapeHtml(fullPath)}</div>
+        ${downloaded ? `<div class="file-local-path" title="${escapeHtml(dlRec.localPath)}">→ ${escapeHtml(dlRec.localPath)}</div>` : ''}
+        <div class="file-size">${isDir ? '文件夹' : fmtSize(it.size)}</div>
+      </div>
+    `
+
+    if (isDir) {
+      row.insertAdjacentHTML('beforeend', ICONS.chevron)
+      row.onclick = () => {
+        vibrate()
+        subPath = rel.endsWith('/') ? rel : rel + '/'
+        if (!subPath.startsWith('/')) subPath = '/' + subPath
+        lastFileItems = null
+        loadFiles()
+      }
+      const actions = document.createElement('div')
+      actions.className = 'file-actions'
+      const delBtn = document.createElement('button')
+      delBtn.className = 'file-action danger'
+      delBtn.textContent = '删除'
+      delBtn.onclick = async (e) => { e.stopPropagation(); await deleteItem(rel, it.name, true) }
+      actions.appendChild(delBtn)
+      row.appendChild(actions)
+    } else {
+      const actions = document.createElement('div')
+      actions.className = 'file-actions'
+      const btn = document.createElement('button')
+      btn.className = 'file-action' + (downloaded ? ' done' : '')
+      btn.textContent = root === 'shared' ? (downloaded ? '重新保存' : '保存') : (downloaded ? '重新下载' : '下载')
+      btn.onclick = async (e) => {
+        e.stopPropagation()
+        vibrate()
+        const dl = it.downloadUrl || `/api/download/${root}?p=${encodeURIComponent(rel)}`
+        const ok = await downloadFile(dl, it.name, false, root, rel, it.mtime)
+        if (ok) loadFiles({ silent: true })
+      }
+      actions.appendChild(btn)
+      if (root === 'shared' || pageServerOrigin()) {
+        const delBtn = document.createElement('button')
+        delBtn.className = 'file-action danger'
+        delBtn.textContent = '删除'
+        delBtn.onclick = async (e) => { e.stopPropagation(); await deleteItem(rel, it.name, false) }
+        actions.appendChild(delBtn)
+      }
+      row.appendChild(actions)
+    }
+    frag.appendChild(row)
+  }
+  list.appendChild(frag)
+}
+
+async function downloadFile(path, name, auto = false, rootKey = 'shared', rel = '', mtime = 0) {
   const url = path.startsWith('http') ? path : api(path)
   const fname = name || 'download'
+  const savePath = localSavePath(fname)
 
   if (window.LanShareNative?.downloadFile) {
     const result = window.LanShareNative.downloadFile(url, fname)
     if (result === 'ok') {
-      toast(auto ? `已自动保存：${fname}` : `已保存到「下载」：${fname}`, auto ? 2500 : 3000)
+      markDownloaded(rootKey, rel, mtime, fname)
+      markSharedSeen(`${rel}:${mtime}`)
+      toast(auto ? `已保存 ${savePath}` : `已保存到 ${savePath}`, auto ? 2800 : 3500)
       return true
     }
-    if (!auto) toastErr(result || '下载失败')
+    if (!auto) toastErr(result || '保存失败')
     return false
   }
 
   if (!auto) toast('下载中…')
-  if (url.startsWith('http')) {
-    const a = document.createElement('a')
-    a.href = url
-    a.download = fname
-    a.style.display = 'none'
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    toast(auto ? `已开始保存：${fname}` : '已开始下载，请查看通知栏')
-    return true
-  }
-
   try {
-    const res = await fetch(url)
-    if (!res.ok) {
-      const reason = res.status === 404 ? '文件不存在或已被删除' : `下载失败 (HTTP ${res.status})`
-      throw new Error(reason)
-    }
+    const res = await fetchWithTimeout(url)
+    if (!res.ok) throw new Error(res.status === 404 ? '文件不存在' : `下载失败 (${res.status})`)
     const blob = await res.blob()
     const blobUrl = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -790,11 +801,9 @@ async function downloadFile(path, name, auto = false) {
     a.style.display = 'none'
     document.body.appendChild(a)
     a.click()
-    setTimeout(() => {
-      URL.revokeObjectURL(blobUrl)
-      a.remove()
-    }, 1000)
-    toast(auto ? `已自动保存：${fname}` : '已保存')
+    setTimeout(() => { URL.revokeObjectURL(blobUrl); a.remove() }, 1000)
+    markDownloaded(rootKey, rel, mtime, fname)
+    toast(auto ? `已保存 ${savePath}` : `已开始下载 ${fname}`)
     return true
   } catch (e) {
     if (!auto) toastErr(e.message || '下载失败')
@@ -886,34 +895,28 @@ async function handleFiles(files) {
   if (!$('#panel-browse').classList.contains('hidden')) loadFiles()
 }
 
-async function collectSharedFiles(rel = '') {
-  const norm = String(rel || '').replace(/^\/+/, '').replace(/\/+$/, '')
-  const browsePath = norm ? `/api/browse/shared/${norm}` : '/api/browse/shared'
-  const res = await fetch(api(browsePath), { cache: 'no-store' })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || '读取共享目录失败')
-  const files = []
-  for (const it of data.items || []) {
-    if (it.isDir) {
-      files.push(...await collectSharedFiles(it.rel || norm))
-    } else {
-      files.push(it)
-    }
-  }
-  return files
-}
-
 async function pollSharedIncoming() {
   if (!connected || !getApiBase()) return
   const autoSave = window.LanShareSettings?.readClientSettings?.()?.autoSaveIncoming !== false
   if (!autoSave) return
   try {
-    const items = await collectSharedFiles()
-    for (const it of items) {
+    const res = await fetchWithTimeout(api('/api/browse/shared'), { cache: 'no-store' }, 5000)
+    const data = await res.json()
+    if (!res.ok) return
+    let changed = false
+    for (const it of data.items || []) {
+      if (it.isDir) continue
       const key = `${it.rel}:${it.mtime}`
       if (seenShared.has(key)) continue
-      const ok = await downloadFile(it.downloadUrl || `/api/download/shared?p=${encodeURIComponent(it.rel)}`, it.name, true)
-      if (ok) markSharedSeen(key)
+      const ok = await downloadFile(
+        it.downloadUrl || `/api/download/shared?p=${encodeURIComponent(it.rel)}`,
+        it.name, true, 'shared', it.rel, it.mtime
+      )
+      if (ok) { markSharedSeen(key); changed = true }
+    }
+    if (changed && root === 'shared' && !$('#panel-browse').classList.contains('hidden')) {
+      lastFileItems = null
+      loadFiles({ silent: true })
     }
   } catch { /* ignore */ }
 }
@@ -989,6 +992,7 @@ $$('.tab').forEach((btn) => {
     if (btn.dataset.root) {
       root = btn.dataset.root
       subPath = '/'
+      lastFileItems = null
       updateTitle()
       syncTabs('browse', 'shared')
       loadFiles()
@@ -997,6 +1001,7 @@ $$('.tab').forEach((btn) => {
     if (btn.dataset.tab === 'browse') {
       root = 'uploads'
       subPath = '/'
+      lastFileItems = null
       updateTitle()
       syncTabs('browse')
       loadFiles()
@@ -1013,23 +1018,24 @@ setInterval(async () => {
     connectedPeer = info
     await announceClientSession()
     await refreshRemoteClients()
-    renderTransferBar()
+    const tjson = JSON.stringify({ info, clients: activeRemoteClients.length })
+    if (tjson !== lastTransferJson) {
+      lastTransferJson = tjson
+      renderTransferBar()
+    }
   } catch {
     setStatus(false, '连接断开')
     connected = false
     activeRemoteClients = []
     renderTransferBar()
   }
-}, 15000)
+}, 20000)
 
-setInterval(() => {
-  if (connected && pageServerOrigin()) refreshRemoteClients()
-}, 5000)
-
-setInterval(pollSharedIncoming, 4000)
+setInterval(pollSharedIncoming, 8000)
 
 ;(async () => {
   loadSeenShared()
+  loadDownloadRegistry()
   const ver = window.__LANSHARE_VERSION__ || ''
   if (ver) {
     $('#ver-tag').textContent = `LanShare v${ver}`

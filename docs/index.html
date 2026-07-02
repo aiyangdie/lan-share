@@ -202,8 +202,8 @@
       <p class="subtitle">手机和电脑在<strong>同一 WiFi</strong> 下互传文件。数据不出局域网，无需云盘、无需注册账号。</p>
       <div class="badges">
         <span class="badge ok">MIT 开源</span>
-        <span class="badge">v1.5.004 · 本机↔对方关系条</span>
-        <span class="badge">设备品牌识别 · 可切换对端</span>
+        <span class="badge">v1.5.005 · 更快更简洁</span>
+        <span class="badge">已下载标记 · 完整路径</span>
         <span class="badge">Windows / Android / iPhone / iPad / Linux / macOS</span>
       </div>
     </header>
@@ -569,7 +569,7 @@ npm run build:release                     # 打包全部安装包</code></pre>
       try {
         const log = await fetch('./changelog.json').then((r) => r.json())
         box.innerHTML = ''
-        for (const item of (log.entries || []).slice(0, 80)) {
+        for (const item of (log.entries || []).slice(0, 40)) {
           const el = document.createElement('div')
           el.className = 'changelog-item'
           const tags = (item.components || []).map((c) => `<span class="tag-sm">${c}</span>`).join('')

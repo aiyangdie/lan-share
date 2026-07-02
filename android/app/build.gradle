@@ -7,8 +7,8 @@ android {
         applicationId "com.lanshare.app"
         minSdkVersion 24
         targetSdkVersion 33
-        versionCode 1005004
-        versionName "1.5.004"
+        versionCode 1005005
+        versionName "1.5.005"
     }
 
     buildTypes {

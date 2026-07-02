@@ -1,27 +1,33 @@
 {
   "latest": {
-    "version": "1.5.004",
-    "tag": "v1.5.004",
+    "version": "1.5.005",
+    "tag": "v1.5.005",
     "date": "2026-07-02",
-    "summary": "主界面本机↔对方关系条，可切换对端，全平台安装包",
+    "summary": "性能优化、已下载标记、完整路径、简洁传输 UI",
     "assets": {
-      "windows": "lan-share-v1.5.004-windows-portable.zip",
-      "windowsAlt": "lan-share-v1.5.004-windows.zip",
-      "android": "lan-share-v1.5.004-android.apk",
-      "androidPhone": "lan-share-v1.5.004-android-phone.apk",
-      "androidTablet": "lan-share-v1.5.004-android-tablet.apk",
-      "androidLocal": "downloads/lan-share-v1.5.004-android.apk",
-      "androidPhoneLocal": "downloads/lan-share-v1.5.004-android-phone.apk",
-      "androidTabletLocal": "downloads/lan-share-v1.5.004-android-tablet.apk",
-      "serverWindows": "lan-share-v1.5.004-server-windows-x64.zip",
-      "linux": "lan-share-v1.5.004-linux-x64.tar.gz",
-      "macos": "lan-share-v1.5.004-macos-x64.tar.gz",
-      "iosIphone": "lan-share-v1.5.004-ios-iphone.txt",
-      "iosIpad": "lan-share-v1.5.004-ios-ipad.txt",
-      "githubBase": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.004"
+      "windows": "lan-share-v1.5.005-windows-portable.zip",
+      "windowsAlt": "lan-share-v1.5.005-windows.zip",
+      "android": "lan-share-v1.5.005-android.apk",
+      "androidPhone": "lan-share-v1.5.005-android-phone.apk",
+      "androidTablet": "lan-share-v1.5.005-android-tablet.apk",
+      "androidLocal": "downloads/lan-share-v1.5.005-android.apk",
+      "androidPhoneLocal": "downloads/lan-share-v1.5.005-android-phone.apk",
+      "androidTabletLocal": "downloads/lan-share-v1.5.005-android-tablet.apk",
+      "serverWindows": "lan-share-v1.5.005-server-windows-x64.zip",
+      "linux": "lan-share-v1.5.005-linux-x64.tar.gz",
+      "macos": "lan-share-v1.5.005-macos-x64.tar.gz",
+      "iosIphone": "lan-share-v1.5.005-ios-iphone.txt",
+      "iosIpad": "lan-share-v1.5.005-ios-ipad.txt",
+      "githubBase": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.005"
     }
   },
   "history": [
+    {
+      "tag": "v1.5.005",
+      "version": "1.5.005",
+      "date": "2026-07-02",
+      "summary": "卡顿修复、已下载标记、路径显示、UI 精简"
+    },
     {
       "tag": "v1.5.004",
       "version": "1.5.004",

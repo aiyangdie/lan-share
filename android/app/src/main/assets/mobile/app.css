@@ -357,7 +357,47 @@ body { overflow-x: hidden; }
   flex-shrink: 0;
 }
 
-/* Transfer relationship bar */
+/* Compact transfer bar */
+.xfer-compact {
+  margin: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: none;
+}
+.xfer-node {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--bg);
+}
+.xfer-node.type-phone { border-left: 3px solid #059669; }
+.xfer-node.type-tablet { border-left: 3px solid #7C3AED; }
+.xfer-node.type-desktop { border-left: 3px solid #4F46E5; }
+.xfer-node.waiting { opacity: 0.7; border-left: 3px dashed var(--border); }
+.xfer-role { font-size: 0.625rem; color: var(--text-tertiary); font-weight: 600; }
+.xfer-type { font-size: 0.625rem; color: var(--accent); font-weight: 700; }
+.xfer-name { font-size: 0.8125rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xfer-arrow { color: var(--text-tertiary); font-size: 0.875rem; flex-shrink: 0; }
+.xfer-switch {
+  flex-shrink: 0;
+  border: none;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
 .transfer-bar {
   margin: 0 16px 8px;
   padding: 14px;
@@ -592,9 +632,9 @@ body { overflow-x: hidden; }
 
 .header h2 {
   margin: 0;
-  font-size: 1.375rem;
+  font-size: 1.0625rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .status {
@@ -767,9 +807,9 @@ body.has-ad-banner .panel {
 
 .file-item {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
   background: var(--surface);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
@@ -779,10 +819,11 @@ body.has-ad-banner .panel {
 .file-item:active { transform: scale(0.985); background: var(--surface-hover); }
 
 .file-icon {
-  width: 40px; height: 40px;
+  width: 36px; height: 36px;
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .file-icon.dir { background: var(--accent-soft); color: var(--accent); }
@@ -790,18 +831,50 @@ body.has-ad-banner .panel {
 
 .file-meta { flex: 1; min-width: 0; }
 
+.file-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .file-name {
   font-size: 0.9375rem;
-  font-weight: 500;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.file-badge {
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+.file-badge.done {
+  background: rgba(5, 150, 105, 0.12);
+  color: #059669;
+}
+
+.file-path,
+.file-local-path {
+  font-size: 0.6875rem;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  color: var(--text-tertiary);
+  margin-top: 3px;
+  word-break: break-all;
+  line-height: 1.35;
+}
+.file-local-path { color: #059669; }
+
 .file-size {
   font-size: 0.75rem;
   color: var(--text-tertiary);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .file-chevron {
@@ -821,6 +894,11 @@ body.has-ad-banner .panel {
 }
 
 .file-action:active { background: rgba(79, 70, 229, 0.15); }
+
+.file-action.done {
+  background: rgba(5, 150, 105, 0.12);
+  color: #059669;
+}
 
 .file-actions {
   display: flex;
