@@ -17,6 +17,7 @@ let root = 'uploads'
 let subPath = '/'
 let connected = false
 let connectedPeer = null
+let activeRemoteClients = []
 let loading = false
 let seenShared = new Set()
 
@@ -90,15 +91,140 @@ function fmtSize(n) {
 
 function setStatus(online, text) {
   const bar = $('#status-bar')
-  $('#top-sub').textContent = text
+  if (text) $('#top-sub').textContent = text
   bar.classList.toggle('offline', !online)
 }
 
+function folderContextLabel() {
+  const D = window.LanShareDevice
+  const isHost = !!pageServerOrigin()
+  const localType = isHost ? 'desktop' : (window.LanShareSettings?.readClientSettings?.()?.deviceType || D?.detectClientDeviceType?.() || 'phone')
+  const localLabel = D?.deviceMeta?.(localType)?.label || '本机'
+  const remoteLabel = isHost ? '手机/平板' : (connectedPeer ? D?.deviceMeta?.(D.peerDeviceType(connectedPeer))?.label : '对方')
+  if (root === 'uploads') {
+    return isHost
+      ? `${remoteLabel} → 本机 · 对方发来的文件`
+      : `本机(${localLabel}) → 对方(${remoteLabel}) · 我发出的文件`
+  }
+  return isHost
+    ? `本机(${localLabel}) → ${remoteLabel} · 共享给对方`
+    : `对方(${remoteLabel}) → 本机(${localLabel}) · 发给我的文件`
+}
+
 function updatePathBar() {
-  const label = root === 'uploads' ? '手机上传' : '电脑共享'
+  const label = folderContextLabel()
   const sub = subPath === '/' ? '' : subPath
   $('#path-label').textContent = label + sub
   $('#btn-back').disabled = subPath === '/'
+  const ctx = $('#transfer-context')
+  if (ctx && connected) {
+    ctx.textContent = label
+    ctx.classList.remove('hidden')
+  }
+}
+
+function renderPeerCard(role, peer, opts = {}) {
+  const D = window.LanShareDevice
+  const waiting = !!opts.waiting
+  const type = waiting ? 'unknown' : D.peerDeviceType(peer)
+  const meta = waiting ? { label: '等待连接', icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>' } : D.deviceMeta(type)
+  const brand = waiting ? '' : D.peerDeviceBrand(peer)
+  const brandMeta = D.brandMeta(brand)
+  const name = waiting ? (opts.hint || '暂无设备') : D.deviceDisplayName(peer)
+  const subtitle = waiting ? '同一 WiFi 打开 App 即可连入' : D.peerDeviceSubtitle(peer)
+  return `
+    <div class="transfer-peer ${opts.side || ''} ${waiting ? 'waiting' : `type-${type}`}">
+      <span class="transfer-peer-role">${escapeHtml(role)}</span>
+      <div class="transfer-peer-body">
+        <div class="discover-icon ${waiting ? 'waiting' : `type-${type}`}">${meta.icon}</div>
+        <div class="transfer-peer-text">
+          <strong>${escapeHtml(name)}</strong>
+          <span>${escapeHtml(subtitle)}</span>
+          ${!waiting && brand ? `<span class="brand-chip sm" style="--brand-color:${brandMeta.color};--brand-soft:${brandMeta.soft}">${escapeHtml(brand)}</span>` : ''}
+          ${!waiting && peer?.ip ? `<span class="transfer-peer-ip">${escapeHtml(peer.ip)}:${peer.port || DEFAULT_HTTP_PORT}</span>` : ''}
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function getLocalPeerView() {
+  const D = window.LanShareDevice
+  const isHost = !!pageServerOrigin()
+  if (isHost && connectedPeer) {
+    return {
+      deviceName: D.deviceDisplayName(connectedPeer),
+      deviceType: D.peerDeviceType(connectedPeer),
+      deviceBrand: D.peerDeviceBrand(connectedPeer),
+      deviceModel: D.peerDeviceModel(connectedPeer),
+      ip: connectedPeer.ip,
+      port: connectedPeer.port,
+    }
+  }
+  const client = window.LanShareSettings?.readClientSettings?.() || {}
+  return {
+    deviceName: window.LanShareSettings?.clientDeviceName?.() || '本机',
+    deviceType: client.deviceType || D.detectClientDeviceType(),
+    deviceBrand: client.deviceBrand || '',
+    deviceModel: client.deviceModel || '',
+  }
+}
+
+function getRemotePeerView() {
+  const isHost = !!pageServerOrigin()
+  if (isHost) {
+    if (activeRemoteClients.length) return activeRemoteClients[0]
+    return null
+  }
+  return connectedPeer
+}
+
+function renderTransferBar() {
+  const el = $('#connected-device')
+  const ctx = $('#transfer-context')
+  if (!el) return
+  if (!connected) {
+    el.classList.add('hidden')
+    el.innerHTML = ''
+    ctx?.classList.add('hidden')
+    return
+  }
+  const local = getLocalPeerView()
+  const remote = getRemotePeerView()
+  const isHost = !!pageServerOrigin()
+  const switchLabel = isHost ? '刷新连接' : '切换对方'
+  el.classList.remove('hidden')
+  el.innerHTML = `
+    <div class="transfer-bar-inner">
+      ${renderPeerCard('本机', local, { side: 'local' })}
+      <div class="transfer-arrow" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+      </div>
+      ${renderPeerCard('对方', remote, {
+        side: 'remote',
+        waiting: !remote,
+        hint: isHost ? '等待手机/平板' : '未连接',
+      })}
+    </div>
+    <button type="button" class="btn-switch-peer" id="btn-switch-device">${switchLabel}</button>
+  `
+  if (ctx) {
+    ctx.textContent = folderContextLabel()
+    ctx.classList.remove('hidden')
+  }
+  setStatus(true, remote
+    ? `与 ${window.LanShareDevice.deviceDisplayName(remote)} 互传中`
+    : (isHost ? '服务运行中，等待连接' : '已连接'))
+  $('#btn-switch-device')?.addEventListener('click', () => {
+    vibrate()
+    if (isHost) refreshRemoteClients().then(() => toast(activeRemoteClients.length ? '已更新连接设备' : '暂无手机/平板连入'))
+    else showSetup()
+  })
+}
+
+function renderConnectedDevice(info) {
+  connectedPeer = info || connectedPeer
+  renderTransferBar()
 }
 
 function defaultServerHost() {
@@ -123,7 +249,8 @@ function clearLocalRecords() {
   server = ''
   connected = false
   connectedPeer = null
-  renderConnectedDevice(null)
+  activeRemoteClients = []
+  renderTransferBar()
   root = 'uploads'
   subPath = '/'
   $('#upload-queue').innerHTML = ''
@@ -233,34 +360,6 @@ function renderDiscoverList(peers) {
   }
 }
 
-function renderConnectedDevice(info) {
-  const el = $('#connected-device')
-  if (!el) return
-  if (!connected || !info) {
-    el.classList.add('hidden')
-    el.innerHTML = ''
-    return
-  }
-  const D = window.LanShareDevice
-  const type = D.peerDeviceType(info)
-  const meta = D.deviceMeta(type)
-  const brand = D.peerDeviceBrand(info)
-  const brandMeta = D.brandMeta(brand)
-  const name = D.deviceDisplayName(info)
-  const subtitle = D.peerDeviceSubtitle(info)
-  el.classList.remove('hidden')
-  el.innerHTML = `
-    <div class="discover-icon type-${type}">${meta.icon}</div>
-    <div class="connected-device-meta">
-      <strong>${escapeHtml(name)}</strong>
-      <span>${escapeHtml(subtitle)} · ${escapeHtml(info.ip)}:${info.port || DEFAULT_HTTP_PORT} · 已连接</span>
-      ${brand ? `<span class="brand-chip sm" style="--brand-color:${brandMeta.color};--brand-soft:${brandMeta.soft}">${escapeHtml(brand)}</span>` : ''}
-    </div>
-    <button type="button" class="btn-link" id="btn-switch-device">换设备</button>
-  `
-  $('#btn-switch-device')?.addEventListener('click', () => { vibrate(); showSetup() })
-}
-
 let discovering = false
 let discoveredPeers = []
 
@@ -366,24 +465,51 @@ async function ping() {
   return res.json()
 }
 
+async function announceClientSession() {
+  if (pageServerOrigin()) return
+  const client = window.LanShareSettings?.readClientSettings?.() || {}
+  try {
+    await fetch(api('/api/session/hello'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        deviceName: window.LanShareSettings?.clientDeviceName?.() || '',
+        deviceType: client.deviceType,
+        deviceBrand: client.deviceBrand || '',
+        deviceModel: client.deviceModel || '',
+      }),
+    })
+  } catch { /* ignore */ }
+}
+
+async function refreshRemoteClients() {
+  if (!pageServerOrigin() || !connected) return
+  try {
+    const res = await fetch(api('/api/session/peers'), { cache: 'no-store' })
+    const data = await res.json()
+    if (res.ok && data.peers) {
+      activeRemoteClients = data.peers
+      renderTransferBar()
+    }
+  } catch { /* ignore */ }
+}
+
 async function connect(url) {
   server = pageServerOrigin() || normalizeServer(url)
   const info = await ping()
   connectedPeer = info
   localStorage.setItem(STORAGE_KEY, server)
   connected = true
-  const D = window.LanShareDevice
-  const label = pageServerOrigin()
-    ? `本机 · ${D.deviceDisplayName(info)}`
-    : `${D.deviceDisplayName(info)} · ${info.ip}:${info.port}`
-  setStatus(true, label)
-  renderConnectedDevice(info)
+  await announceClientSession()
+  renderTransferBar()
   showMain()
   root = 'uploads'
   subPath = '/'
   syncTabs('browse')
   updateTitle()
+  updatePathBar()
   await loadFiles()
+  await refreshRemoteClients()
   window.LanShareAds?.refresh?.()
   window.LanShareUpdate?.refresh?.()
   return info
@@ -435,9 +561,15 @@ function showMain() {
 }
 
 function updateTitle() {
-  $('#top-title').textContent = root === 'uploads' ? '手机上传' : '电脑共享'
+  $('#top-title').textContent = connected ? folderContextLabel() : '互传文件'
   const hint = $('#shared-hint')
-  if (hint) hint.classList.toggle('hidden', root !== 'shared')
+  if (hint) {
+    const isHost = !!pageServerOrigin()
+    hint.textContent = isHost
+      ? '对方设备可在 shared 文件夹取文件；新文件会自动出现在列表'
+      : '电脑放入 shared 文件夹的新文件会自动保存到本机「下载」'
+    hint.classList.toggle('hidden', root !== 'shared')
+  }
 }
 
 function syncTabs(tab, rootOverride) {
@@ -495,7 +627,7 @@ async function deleteItem(rel, name, isDir) {
 }
 
 async function clearCurrentFolder() {
-  const label = root === 'uploads' ? '手机上传' : '电脑共享'
+  const label = folderContextLabel()
   const folder = subPath === '/' ? label : `${label}${subPath}`
   if (!confirmAction(`确定清空「${folder}」下的全部内容？\n此操作会删除电脑上的文件，不可恢复。`)) return
   try {
@@ -878,12 +1010,21 @@ setInterval(async () => {
   if (!connected || !server) return
   try {
     const info = await ping()
-    setStatus(true, `${info.ip}:${info.port}`)
+    connectedPeer = info
+    await announceClientSession()
+    await refreshRemoteClients()
+    renderTransferBar()
   } catch {
     setStatus(false, '连接断开')
     connected = false
+    activeRemoteClients = []
+    renderTransferBar()
   }
 }, 15000)
+
+setInterval(() => {
+  if (connected && pageServerOrigin()) refreshRemoteClients()
+}, 5000)
 
 setInterval(pollSharedIncoming, 4000)
 

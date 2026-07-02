@@ -4,6 +4,8 @@ All notable changes are documented here. **Old release packages are kept in `rel
 
 ## 细粒度更新留痕
 
+- **1.5.004** (2026-07-02) — 主界面本机↔对方关系条，可切换对端设备
+
 - **1.5.003** (2026-07-02) — 设备品牌识别、类型自动匹配、全平台安装包优化
 
 - **1.5.002** (2026-07-02) — v1.6 系统设置：设备名/类型/路径/LocalSend风格UI

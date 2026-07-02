@@ -27,6 +27,23 @@ try {
 const PORT = Number(process.env.PORT || runtimeSettings.port)
 const HOST = '0.0.0.0'
 
+/** 最近连入的手机/平板（LAN 会话，仅内存） */
+const clientSessions = new Map()
+const SESSION_TTL_MS = 120_000
+
+function pruneClientSessions() {
+  const now = Date.now()
+  for (const [key, s] of clientSessions) {
+    if (now - s.seenAt > SESSION_TTL_MS) clientSessions.delete(key)
+  }
+}
+
+function clientIpFromReq(req) {
+  const fwd = req.headers['x-forwarded-for']
+  if (fwd) return String(fwd).split(',')[0].trim()
+  return req.socket?.remoteAddress?.replace(/^::ffff:/, '') || ''
+}
+
 const UPLOAD_DIR = resolveLegacyDir('uploads', '手机上传', runtimeSettings.uploadDir)
 const SHARED_DIR = resolveLegacyDir('shared', '共享给手机', runtimeSettings.sharedDir)
 const PUBLIC_DIR = path.join(APP_BASE, 'public')
@@ -256,6 +273,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && url.pathname === '/api/health') {
       const s = readSettings()
+      pruneClientSessions()
       return json(res, 200, {
         ok: true,
         name: 'lan-share',
@@ -269,6 +287,31 @@ const server = http.createServer(async (req, res) => {
         deviceModel: s.deviceModel || '',
         time: Date.now(),
       })
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/session/hello') {
+      try {
+        const body = await readJsonBody(req)
+        const ip = clientIpFromReq(req)
+        const entry = {
+          ip,
+          deviceName: String(body.deviceName || '未知设备').slice(0, 32),
+          deviceType: ['desktop', 'phone', 'tablet'].includes(body.deviceType) ? body.deviceType : 'phone',
+          deviceBrand: String(body.deviceBrand || '').slice(0, 32),
+          deviceModel: String(body.deviceModel || '').slice(0, 64),
+          seenAt: Date.now(),
+        }
+        clientSessions.set(ip, entry)
+        return json(res, 200, { ok: true, session: entry })
+      } catch (e) {
+        return json(res, 400, { error: e.message })
+      }
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/session/peers') {
+      pruneClientSessions()
+      const peers = [...clientSessions.values()].sort((a, b) => b.seenAt - a.seenAt)
+      return json(res, 200, { ok: true, peers })
     }
 
     if (req.method === 'GET' && url.pathname === '/api/settings') {

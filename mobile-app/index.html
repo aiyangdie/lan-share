@@ -177,7 +177,7 @@
     <section id="screen-main" class="screen hidden">
       <header class="header">
         <div class="header-main">
-          <h2 id="top-title">手机上传</h2>
+          <h2 id="top-title">互传文件</h2>
           <div class="status" id="status-bar">
             <span class="status-dot" id="status-dot"></span>
             <span id="top-sub">已连接</span>
@@ -191,7 +191,8 @@
 
       <div id="toast" class="toast hidden"></div>
 
-      <div id="connected-device" class="connected-device hidden"></div>
+      <div id="connected-device" class="transfer-bar hidden" aria-live="polite"></div>
+      <p id="transfer-context" class="transfer-context hidden"></p>
 
       <!-- 浏览 -->
       <div id="panel-browse" class="panel">
@@ -199,7 +200,7 @@
           <button class="path-btn" id="btn-back" disabled>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <div class="path-text" id="path-label">手机上传</div>
+          <div class="path-text" id="path-label">文件列表</div>
           <button class="path-btn path-btn-danger hidden" id="btn-clear-folder" aria-label="清空当前文件夹" title="清空当前文件夹">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
           </button>
