@@ -11,6 +11,8 @@
       "androidPhone": "lan-share-v1.5.004-android-phone.apk",
       "androidTablet": "lan-share-v1.5.004-android-tablet.apk",
       "androidLocal": "downloads/lan-share-v1.5.004-android.apk",
+      "androidPhoneLocal": "downloads/lan-share-v1.5.004-android-phone.apk",
+      "androidTabletLocal": "downloads/lan-share-v1.5.004-android-tablet.apk",
       "serverWindows": "lan-share-v1.5.004-server-windows-x64.zip",
       "linux": "lan-share-v1.5.004-linux-x64.tar.gz",
       "macos": "lan-share-v1.5.004-macos-x64.tar.gz",

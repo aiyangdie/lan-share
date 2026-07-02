@@ -95,7 +95,12 @@
     .btn:hover { transform: translateY(-1px); text-decoration: none; opacity: .95; }
     .btn-win { background: var(--accent); color: #fff; }
     .btn-apk { background: #059669; color: #fff; }
+    .btn-tablet { background: #7c3aed; color: #fff; }
+    .btn-linux { background: #0ea5e9; color: #fff; }
+    .btn-mac { background: #64748b; color: #fff; }
+    .btn-ios { background: #334155; color: #fff; }
     .btn-ghost { background: rgba(255,255,255,.07); color: #fff; font-size: .8rem; padding: 8px 12px; }
+    .dl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 16px; }
     .mirrors summary { cursor: pointer; color: var(--dim); font-size: .78rem; }
     .mirror-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .history-list { display: flex; flex-direction: column; gap: 8px; }
@@ -197,9 +202,9 @@
       <p class="subtitle">手机和电脑在<strong>同一 WiFi</strong> 下互传文件。数据不出局域网，无需云盘、无需注册账号。</p>
       <div class="badges">
         <span class="badge ok">MIT 开源</span>
-        <span class="badge">v1.6 系统设置 · LocalSend 风格</span>
-        <span class="badge">Windows / Android / iPhone / 平板</span>
-        <span class="badge">Node.js ≥ 18</span>
+        <span class="badge">v1.5.004 · 本机↔对方关系条</span>
+        <span class="badge">设备品牌识别 · 可切换对端</span>
+        <span class="badge">Windows / Android / iPhone / iPad / Linux / macOS</span>
       </div>
     </header>
 
@@ -208,36 +213,24 @@
       <h2>核心特性</h2>
       <p class="section-desc">轻量、本地、可自部署。PC 当文件网关，手机用同一套 Web UI（浏览器 / APK / PWA）。</p>
       <div class="grid3">
-        <div class="card"><div class="card-icon">📡</div><h3>UDP 自动发现</h3><p>手机搜索附近电脑，无需手输 IP。v1.2 起支持三层发现策略。</p></div>
-        <div class="card"><div class="card-icon">⚡</div><h3>一键启动</h3><p>Windows 双击 <code>LanShare.exe</code>，自动打开 <code>:8787</code> 并创建数据目录。</p></div>
+        <div class="card"><div class="card-icon">📡</div><h3>UDP 自动发现</h3><p>手机/平板搜索附近电脑，点选即连。支持子网扫描备用策略。</p></div>
+        <div class="card"><div class="card-icon">👥</div><h3>本机 ↔ 对方</h3><p>传文件时清晰显示「我是手机/平板/电脑」和「对方是谁」，可一键切换对端。</p></div>
+        <div class="card"><div class="card-icon">🏷️</div><h3>设备品牌识别</h3><p>自动识别戴尔/华为/苹果等型号，附近设备列表彩色区分电脑、手机、平板。</p></div>
+        <div class="card"><div class="card-icon">⚡</div><h3>一键启动</h3><p>Windows 解压 zip 后双击 <code>LanShare.exe</code>，自动打开 <code>:8787</code>。</p></div>
         <div class="card"><div class="card-icon">↕️</div><h3>双向互传</h3><p>手机上传到 <code>uploads/</code>；电脑放入 <code>shared/</code> 供手机下载。</p></div>
         <div class="card"><div class="card-icon">🔒</div><h3>数据本地化</h3><p>不经第三方服务器，适合家庭 / 办公室内网传文件。</p></div>
-        <div class="card"><div class="card-icon">📱</div><h3>跨平台客户端</h3><p>Android APK、iPhone Safari PWA、任意手机浏览器均可使用。</p></div>
-        <div class="card"><div class="card-icon">🛠</div><h3>开发者友好</h3><p>纯 REST API + 单文件服务端，依赖仅 <code>busboy</code>，易于二次开发。</p></div>
       </div>
     </section>
 
     <!-- 下载 -->
     <section id="download">
       <h2>下载最新版 <span class="tag">推荐</span></h2>
-      <p class="section-desc">国内可直连本页下载，无需打开 GitHub。Windows 约 26 MB，Android APK 约 3 MB。</p>
+      <p class="section-desc">国内可直连本页下载 APK；Windows / Linux / macOS 等大文件走 GitHub Release（含加速镜像）。</p>
       <div class="latest-box">
         <div class="latest-ver">v<span id="latest-ver">—</span></div>
         <div class="latest-meta" id="latest-meta"></div>
-        <div class="dl-row">
-          <div class="dl-item">
-            <strong>Windows 电脑端</strong>
-            <small id="win-desc">便携 zip · 解压后双击 LanShare.exe</small>
-            <a class="btn btn-win" id="btn-win" href="#">下载 Windows 版</a>
-            <details class="mirrors"><summary>备用镜像（GitHub 加速）</summary><div class="mirror-btns" id="mirrors-win"></div></details>
-          </div>
-          <div class="dl-item">
-            <strong>Android 手机端</strong>
-            <small id="apk-desc">APK · 支持自动发现附近电脑</small>
-            <a class="btn btn-apk" id="btn-apk" href="#">下载 Android 版</a>
-            <details class="mirrors"><summary>备用镜像</summary><div class="mirror-btns" id="mirrors-apk"></div></details>
-          </div>
-        </div>
+        <div class="dl-grid" id="dl-grid"></div>
+        <p style="color:var(--dim);font-size:.78rem;margin:14px 0 0">全部安装包：<a id="all-releases-inline" href="#">GitHub Releases v1.5.004</a></p>
       </div>
 
       <h2 style="margin-top:36px">历史版本</h2>
@@ -302,12 +295,12 @@
           <p style="margin:10px 0 0;color:var(--dim);font-size:.82rem">与 LocalSend 的纯 Dart/Flutter 不同，我们优先「轻量 + 一套 UI 多端同步 + 易改易部署」。</p>
         </div>
         <div class="card">
-          <h3>v1.6 系统设置（类 LocalSend）</h3>
+          <h3>v1.5.004 更新要点</h3>
           <ul style="margin:8px 0 0;padding-left:1.1rem;color:var(--muted);font-size:.88rem;line-height:1.65">
-            <li>设备自定义名称 · 电脑/手机/平板彩色图标区分</li>
-            <li>接收目录 / 共享目录（电脑端可配置路径）</li>
-            <li>自动保存收到的文件 · 点选附近设备即连即传</li>
-            <li>手机/平板/浏览器：客户端设置存本地；电脑：服务端 <code>/api/settings</code></li>
+            <li><strong>本机 ↔ 对方关系条</strong>：传文件时一眼看出双方设备类型（电脑/手机/平板）</li>
+            <li><strong>切换对端</strong>：手机可换连另一台电脑；电脑可刷新查看连入的手机</li>
+            <li>设备品牌/型号识别 · 系统设置 · LocalSend 风格 UI</li>
+            <li>手机/平板/浏览器：客户端设置存本地；电脑：<code>/api/settings</code></li>
           </ul>
         </div>
       </div>
@@ -340,7 +333,9 @@
         <table>
           <thead><tr><th>方法</th><th>路径</th><th>说明</th></tr></thead>
           <tbody>
-            <tr><td><code>GET</code></td><td><code>/api/health</code></td><td>健康检查，返回版本、IP、设备名与类型</td></tr>
+            <tr><td><code>GET</code></td><td><code>/api/health</code></td><td>健康检查，返回版本、IP、设备名/类型/品牌</td></tr>
+            <tr><td><code>POST</code></td><td><code>/api/session/hello</code></td><td>客户端上报本机设备信息（电脑可见连入手机）</td></tr>
+            <tr><td><code>GET</code></td><td><code>/api/session/peers</code></td><td>当前连入的客户端列表</td></tr>
             <tr><td><code>GET/PUT</code></td><td><code>/api/settings</code></td><td>系统设置：路径、端口、设备名、自动保存</td></tr>
             <tr><td><code>GET</code></td><td><code>/api/discover/peers</code></td><td>UDP 被动发现的附近设备列表</td></tr>
             <tr><td><code>GET</code></td><td><code>/api/discover/scan</code></td><td>主动扫描当前 /24 子网</td></tr>
@@ -357,10 +352,13 @@
         <table>
           <thead><tr><th>平台</th><th>角色</th><th>使用方式</th></tr></thead>
           <tbody>
-            <tr><td>Windows</td><td>服务端 + 可选 UI</td><td>解压 zip → <code>LanShare.exe</code> 或 <code>npm start</code></td></tr>
-            <tr><td>Android</td><td>客户端（WebView 壳）</td><td>安装 APK → 附近设备 → 系统设置</td></tr>
-            <tr><td>iPhone / iPad</td><td>客户端 (PWA)</td><td>Safari 打开 <code>http://电脑IP:8787</code> → 添加到主屏幕</td></tr>
-            <tr><td>macOS / Linux</td><td>服务端</td><td><code>node server.mjs</code>（Release 提供 zip/tar）</td></tr>
+            <tr><td>Windows</td><td>服务端 + UI</td><td>下载 zip → 解压 → 双击 <code>LanShare.exe</code></td></tr>
+            <tr><td>Android 手机</td><td>客户端</td><td><code>android-phone.apk</code> → 附近设备 → 本机↔对方关系条</td></tr>
+            <tr><td>Android 平板</td><td>客户端</td><td><code>android-tablet.apk</code>（通用包，自动识别平板）</td></tr>
+            <tr><td>iPhone</td><td>客户端 (PWA)</td><td>Safari 打开 <code>http://电脑IP:8787</code> → 添加到主屏幕</td></tr>
+            <tr><td>iPad</td><td>客户端 (PWA)</td><td>同上，界面自动识别为平板（紫色主题）</td></tr>
+            <tr><td>Linux</td><td>服务端</td><td>解压 <code>linux-x64.tar.gz</code> → <code>./start-server.sh</code></td></tr>
+            <tr><td>macOS</td><td>服务端</td><td>解压 <code>macos-x64.tar.gz</code> → 双击 <code>start-server.command</code></td></tr>
           </tbody>
         </table>
       </div>
@@ -382,8 +380,8 @@
       <h2>快速开始</h2>
       <div class="steps">
         <div class="step"><div class="step-num">1</div><div><strong>电脑启动服务</strong><p>下载 Windows 版 → 解压 → 双击 <code>LanShare.exe</code>。浏览器会自动打开 <code>http://127.0.0.1:8787/</code>，同目录生成 <code>shared/</code> 与 <code>uploads/</code>。</p></div></div>
-        <div class="step"><div class="step-num">2</div><div><strong>手机连接</strong><p>安装 Android APK，确保与电脑<strong>同一 WiFi</strong>。打开 App →「附近电脑」自动发现 → 点击连接。iPhone 用 Safari 访问电脑 IP:8787。</p></div></div>
-        <div class="step"><div class="step-num">3</div><div><strong>互传文件</strong><p>手机「上传」→ 文件进电脑 <code>uploads/</code>；电脑文件放入 <code>shared/</code> → 手机「电脑共享」里下载。</p></div></div>
+        <div class="step"><div class="step-num">2</div><div><strong>手机 / 平板连接</strong><p>安装对应 APK，与电脑<strong>同一 WiFi</strong>。打开 App → 点选附近电脑 → 主界面可见<strong>本机 ↔ 对方</strong>关系条。iPhone/iPad 用 Safari 访问电脑 IP:8787 并添加到主屏幕。</p></div></div>
+        <div class="step"><div class="step-num">3</div><div><strong>互传文件</strong><p>关系条下方会说明方向，例如「本机(手机) → 对方(电脑) · 我发出的文件」。电脑端放入 <code>shared/</code> 后，手机在「对方→本机」列表下载。</p></div></div>
       </div>
 
       <h3 style="margin-top:28px">开发者</h3>
@@ -451,6 +449,18 @@ npm run build:release                     # 打包全部安装包</code></pre>
       { name: 'mirror.ghproxy', prefix: 'https://mirror.ghproxy.com/' },
     ]
 
+    const DOWNLOAD_CARDS = [
+      { id: 'windows', title: 'Windows 电脑', desc: '解压 zip 后双击 LanShare.exe · 约 26 MB', asset: 'windows', btn: '下载 Windows 版', cls: 'btn-win', primary: true },
+      { id: 'androidPhone', title: 'Android 手机', desc: '自动识别手机 · 本机↔对方关系条 · 约 3 MB', asset: 'androidPhone', local: 'androidLocal', btn: '下载手机 APK', cls: 'btn-apk', primary: true },
+      { id: 'androidTablet', title: 'Android 平板', desc: '自动识别平板 · 紫色主题 · 通用 APK', asset: 'androidTablet', local: 'androidTabletLocal', btn: '下载平板 APK', cls: 'btn-tablet', primary: true },
+      { id: 'android', title: 'Android 通用', desc: '手机/平板通用包', asset: 'android', btn: '下载通用 APK', cls: 'btn-apk' },
+      { id: 'linux', title: 'Linux 服务端', desc: 'tar.gz · start-server.sh', asset: 'linux', btn: '下载 Linux 版', cls: 'btn-linux' },
+      { id: 'macos', title: 'macOS 服务端', desc: 'tar.gz · start-server.command', asset: 'macos', btn: '下载 macOS 版', cls: 'btn-mac' },
+      { id: 'serverWindows', title: 'Windows 服务端', desc: '仅 Node 服务 · 无 exe 启动器', asset: 'serverWindows', btn: '下载服务端 zip', cls: 'btn-ghost' },
+      { id: 'iosIphone', title: 'iPhone (PWA)', desc: 'Safari 添加到主屏幕 · 见安装说明', asset: 'iosIphone', btn: '查看 iPhone 说明', cls: 'btn-ios', text: true },
+      { id: 'iosIpad', title: 'iPad (PWA)', desc: '横屏体验更佳 · 见安装说明', asset: 'iosIpad', btn: '查看 iPad 说明', cls: 'btn-ios', text: true },
+    ]
+
     function ghReleaseUrl(repo, tag) {
       return `https://github.com/${repo}/releases/tag/${tag}`
     }
@@ -475,46 +485,66 @@ npm run build:release                     # 打包全部安装包</code></pre>
       document.getElementById('card-repo').href = url
     }
 
+    function buildDownloadCard(card, repo, tag, assets) {
+      const filename = assets[card.asset]
+      if (!filename) return null
+      const ghRaw = ghAssetUrl(repo, tag, filename)
+      let href = mirrorUrl(MIRRORS[0].prefix, ghRaw)
+      if (card.local && assets[card.local]) {
+        href = new URL(assets[card.local], location.href).href
+      }
+      const el = document.createElement('div')
+      el.className = 'dl-item'
+      el.innerHTML = `
+        <strong>${card.title}</strong>
+        <small>${card.desc}<br><code style="font-size:.72rem">${filename}</code></small>
+        <a class="btn ${card.cls}" href="${href}" ${card.local ? `download="${filename}"` : ''} target="_blank" rel="noopener">${card.btn}</a>
+        ${card.primary ? `<details class="mirrors"><summary>GitHub 直连 / 加速镜像</summary><div class="mirror-btns"></div></details>` : ''}
+      `
+      const mirrors = el.querySelector('.mirror-btns')
+      if (mirrors) {
+        const direct = document.createElement('a')
+        direct.className = 'btn btn-ghost'
+        direct.href = ghRaw
+        direct.target = '_blank'
+        direct.rel = 'noopener'
+        direct.textContent = 'GitHub 直连'
+        mirrors.appendChild(direct)
+        MIRRORS.forEach((m) => {
+          const a = document.createElement('a')
+          a.className = 'btn btn-ghost'
+          a.href = mirrorUrl(m.prefix, ghRaw)
+          a.target = '_blank'
+          a.rel = 'noopener'
+          a.textContent = m.name
+          mirrors.appendChild(a)
+        })
+      }
+      return el
+    }
+
     async function init() {
       const data = await fetch('./releases.json').then(r => r.json())
       const { latest, history, repo } = data
       const tag = latest.tag
+      const assets = latest.assets
       setRepoLinks(repo)
 
       document.getElementById('latest-ver').textContent = latest.version
       document.getElementById('latest-meta').textContent = `${latest.date} · ${latest.summary}`
 
-      const winFile = latest.assets.windows
-      const apkFile = latest.assets.android
-      const winRaw = ghAssetUrl(repo, tag, winFile)
-      const apkLocal = latest.assets.androidLocal
-        ? new URL(latest.assets.androidLocal, location.href).href
-        : ghAssetUrl(repo, tag, apkFile)
+      const grid = document.getElementById('dl-grid')
+      grid.innerHTML = ''
+      for (const card of DOWNLOAD_CARDS) {
+        const node = buildDownloadCard(card, repo, tag, assets)
+        if (node) grid.appendChild(node)
+      }
 
-      document.getElementById('win-desc').textContent = `${winFile} · 约 26 MB · 解压后双击 LanShare.exe`
-      document.getElementById('apk-desc').textContent = `${apkFile} · 约 3 MB · 支持自动发现`
-
-      document.getElementById('btn-win').href = mirrorUrl(MIRRORS[0].prefix, winRaw)
-      document.getElementById('btn-apk').href = apkLocal
-      document.getElementById('btn-apk').setAttribute('download', apkFile)
-
-      const winMirrors = document.getElementById('mirrors-win')
-      const apkMirrors = document.getElementById('mirrors-apk')
-      MIRRORS.forEach((m, i) => {
-        if (i === 0) return
-        const w = document.createElement('a')
-        w.className = 'btn btn-ghost'
-        w.href = mirrorUrl(m.prefix, winRaw)
-        w.textContent = m.name
-        winMirrors.appendChild(w)
-      })
-      MIRRORS.forEach((m) => {
-        const a = document.createElement('a')
-        a.className = 'btn btn-ghost'
-        a.href = mirrorUrl(m.prefix, ghAssetUrl(repo, tag, apkFile))
-        a.textContent = m.name
-        apkMirrors.appendChild(a)
-      })
+      const relInline = document.getElementById('all-releases-inline')
+      if (relInline) {
+        relInline.href = ghReleaseUrl(repo, tag)
+        relInline.textContent = `GitHub Releases ${tag}`
+      }
 
       const list = document.getElementById('history-list')
       history.forEach((item) => {
