@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Build artifacts — archive/ is NEVER deleted
+releases/.stage-server/
+releases/.stage-exe/
+dist/
+
+# Local SDK
+tools/android-sdk/
+tools/gradle-*/
+tools/cache/
+
+android/app/build/
+android/.gradle/
+android/local.properties
+
+# User data — do not commit personal files
+uploads/*
+!uploads/.gitkeep
+shared/*
+!shared/.gitkeep
+手机上传/*
+!手机上传/.gitkeep
+共享给手机/*
+!共享给手机/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Temp
+releases/.stage-server/
+dist/
+*.log
+
+# Env
+.env
+.env.*

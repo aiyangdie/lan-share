@@ -1,0 +1,10 @@
+{
+  "pkg": {
+    "assets": [
+      "public/**/*",
+      "mobile-app/**/*",
+      "package.json"
+    ],
+    "outputPath": "releases"
+  }
+}
