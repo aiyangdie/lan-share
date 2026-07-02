@@ -1,6 +1,6 @@
 {
   "name": "lanshare-desktop",
-  "version": "1.5.004",
+  "version": "1.5.006",
   "private": true,
   "description": "LanShare desktop — tray, autostart, settings",
   "main": "electron/main.mjs",

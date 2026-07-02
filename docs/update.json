@@ -1,22 +1,22 @@
 {
-  "version": "1.5.004",
-  "versionCode": 1005004,
+  "version": "1.5.006",
+  "versionCode": 1005006,
   "android": {
-    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.004/lan-share-v1.5.004-android.apk",
-    "phoneUrl": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.004/lan-share-v1.5.004-android-phone.apk",
-    "tabletUrl": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.004/lan-share-v1.5.004-android-tablet.apk",
-    "localUrl": "https://aiyangdie.github.io/lan-share/downloads/lan-share-v1.5.004-android.apk"
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.006/lan-share-v1.5.006-android.apk",
+    "phoneUrl": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.006/lan-share-v1.5.006-android-phone.apk",
+    "tabletUrl": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.006/lan-share-v1.5.006-android-tablet.apk",
+    "localUrl": "https://aiyangdie.github.io/lan-share/downloads/lan-share-v1.5.006-android.apk"
   },
   "windows": {
-    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.004/lan-share-v1.5.004-windows-portable.zip"
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.006/lan-share-v1.5.006-windows-portable.zip"
   },
   "linux": {
-    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.004/lan-share-v1.5.004-linux-x64.tar.gz"
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.006/lan-share-v1.5.006-linux-x64.tar.gz"
   },
   "macos": {
-    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.004/lan-share-v1.5.004-macos-x64.tar.gz"
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.006/lan-share-v1.5.006-macos-x64.tar.gz"
   },
   "website": "https://aiyangdie.github.io/lan-share/",
-  "releases": "https://github.com/aiyangdie/lan-share/releases/tag/v1.5.004",
+  "releases": "https://github.com/aiyangdie/lan-share/releases/tag/v1.5.006",
   "admin": "/admin"
 }

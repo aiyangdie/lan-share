@@ -8,15 +8,15 @@
     "level": "info"
   },
   "android": {
-    "version": "1.5.005",
-    "versionCode": 1005005,
-    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.005/lan-share-v1.5.005-android.apk",
+    "version": "1.5.006",
+    "versionCode": 1005006,
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.006/lan-share-v1.5.006-android.apk",
     "mandatory": false,
     "changelog": "性能优化、已下载标记、完整路径显示、简洁本机↔对方 UI"
   },
   "windows": {
-    "version": "1.5.005",
-    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.005/lan-share-v1.5.005-windows-portable.zip",
+    "version": "1.5.006",
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.006/lan-share-v1.5.006-windows-portable.zip",
     "mandatory": false,
     "changelog": "传输页显示本机与对方设备；解压 zip 双击 LanShare.exe 运行"
   }

@@ -1,0 +1,2 @@
+LanShare v1.5.006 — iPhone / iPad (PWA)
+详见 ios-iphone.txt 与 ios-ipad.txt

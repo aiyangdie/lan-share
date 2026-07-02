@@ -3,6 +3,17 @@
   "description": "LanShare 细粒度更新留痕。每条记录对应一次版本 +0.001 与一次 Git 提交。",
   "entries": [
     {
+      "version": "1.5.006",
+      "date": "2026-07-02",
+      "time": "2026-07-02T16:26:55.268Z",
+      "summary": "打包发布与官网 APK 下载同步",
+      "versionCode": 1005006,
+      "components": [
+        "android",
+        "website"
+      ]
+    },
+    {
       "version": "1.5.005",
       "date": "2026-07-02",
       "time": "2026-07-02T16:21:46.331Z",

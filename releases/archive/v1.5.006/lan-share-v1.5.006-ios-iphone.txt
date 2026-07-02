@@ -1,0 +1,10 @@
+LanShare v1.5.006 — iPhone 安装
+==========================================
+
+方式一：App（推荐 Android 用户用 APK；iPhone 暂用 PWA）
+1. 电脑运行 LanShare.exe（Windows 解压 zip 后双击）
+2. 同一 WiFi → iPhone Safari 打开 http://电脑IP:8787
+3. 分享 → 添加到主屏幕 → 像 App 一样使用
+
+方式二：TestFlight / App Store
+- 开发中，请关注 GitHub Release 更新

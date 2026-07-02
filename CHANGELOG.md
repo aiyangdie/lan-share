@@ -4,6 +4,8 @@ All notable changes are documented here. **Old release packages are kept in `rel
 
 ## 细粒度更新留痕
 
+- **1.5.006** (2026-07-02) — 打包发布与官网 APK 下载同步
+
 - **1.5.005** (2026-07-02) — 性能优化、已下载标记、完整路径、简洁传输条 UI
 
 - **1.5.004** (2026-07-02) — 主界面本机↔对方关系条，可切换对端设备

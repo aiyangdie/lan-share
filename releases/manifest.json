@@ -1,18 +1,18 @@
 {
-  "latest": "1.5.005",
-  "built": "2026-07-02T16:22:58.579Z",
+  "latest": "1.5.006",
+  "built": "2026-07-02T16:27:59.710Z",
   "current": [
-    "lan-share-v1.5.005-android.apk",
-    "lan-share-v1.5.005-android-phone.apk",
-    "lan-share-v1.5.005-android-tablet.apk",
-    "lan-share-v1.5.005-windows-portable.zip",
-    "lan-share-v1.5.005-windows.zip",
-    "lan-share-v1.5.005-server-windows-x64.zip",
-    "lan-share-v1.5.005-linux-x64.tar.gz",
-    "lan-share-v1.5.005-macos-x64.tar.gz",
-    "lan-share-v1.5.005-ios-iphone.txt",
-    "lan-share-v1.5.005-ios-ipad.txt",
-    "lan-share-v1.5.005-ios-pwa.txt"
+    "lan-share-v1.5.006-android.apk",
+    "lan-share-v1.5.006-android-phone.apk",
+    "lan-share-v1.5.006-android-tablet.apk",
+    "lan-share-v1.5.006-windows-portable.zip",
+    "lan-share-v1.5.006-windows.zip",
+    "lan-share-v1.5.006-server-windows-x64.zip",
+    "lan-share-v1.5.006-linux-x64.tar.gz",
+    "lan-share-v1.5.006-macos-x64.tar.gz",
+    "lan-share-v1.5.006-ios-iphone.txt",
+    "lan-share-v1.5.006-ios-ipad.txt",
+    "lan-share-v1.5.006-ios-pwa.txt"
   ],
   "archivedVersions": [
     "v0.9.0-beta",
@@ -22,6 +22,7 @@
     "v1.5.002",
     "v1.5.003",
     "v1.5.004",
-    "v1.5.005"
+    "v1.5.005",
+    "v1.5.006"
   ]
 }
