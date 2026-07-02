@@ -1,0 +1,12 @@
+{
+  "name": "LanShare",
+  "short_name": "LanShare",
+  "description": "手机和电脑在同一 WiFi 下互传文件",
+  "version": "1.1.0",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4F46E5",
+  "lang": "zh-CN",
+  "icons": []
+}

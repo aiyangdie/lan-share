@@ -1,0 +1,37 @@
+{
+  "name": "lan-share",
+  "version": "1.2.0",
+  "description": "Transfer files between phone and PC over local WiFi — no cloud, no account",
+  "license": "MIT",
+  "author": "aiyangdie <aike1015@qq.com>",
+  "homepage": "https://aiyangdie.github.io/lan-share/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aiyangdie/lan-share.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aiyangdie/lan-share/issues"
+  },
+  "keywords": [
+    "lan",
+    "file-transfer",
+    "wifi",
+    "android",
+    "pwa",
+    "local-network"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "sync": "node scripts/sync-version.mjs && node scripts/sync-mobile.mjs",
+    "build:exe": "node scripts/build-exe.mjs",
+    "build:apk": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-apk.ps1",
+    "build:release": "node scripts/build-release.mjs"
+  },
+  "dependencies": {
+    "busboy": "^1.6.0"
+  }
+}
