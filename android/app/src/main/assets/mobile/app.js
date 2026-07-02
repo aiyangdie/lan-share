@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'lan_share_server'
+const STORAGE_SHARED_SEEN = 'lan_share_seen_shared'
 
 const $ = (sel) => document.querySelector(sel)
 const $$ = (sel) => document.querySelectorAll(sel)
@@ -15,6 +16,23 @@ let root = 'uploads'
 let subPath = '/'
 let connected = false
 let loading = false
+let seenShared = new Set()
+
+function loadSeenShared() {
+  try {
+    seenShared = new Set(JSON.parse(localStorage.getItem(STORAGE_SHARED_SEEN) || '[]'))
+  } catch {
+    seenShared = new Set()
+  }
+}
+
+function markSharedSeen(key) {
+  seenShared.add(key)
+  const list = [...seenShared]
+  if (list.length > 500) list.splice(0, list.length - 500)
+  localStorage.setItem(STORAGE_SHARED_SEEN, JSON.stringify(list))
+  seenShared = new Set(list)
+}
 
 function normalizeServer(url) {
   let u = (url || '').trim().replace(/\/+$/, '')
@@ -22,8 +40,18 @@ function normalizeServer(url) {
   return u
 }
 
+/** 电脑浏览器直接打开本机 8787 时，始终走当前页面同源，避免跨域 */
+function pageServerOrigin() {
+  if (window.location.port === '8787') return window.location.origin
+  return ''
+}
+
+function getApiBase() {
+  return pageServerOrigin() || server
+}
+
 function api(path) {
-  return `${server}${path}`
+  return `${getApiBase()}${path}`
 }
 
 function vibrate(ms = 6) {
@@ -36,6 +64,10 @@ function toast(msg, ms = 2000) {
   el.classList.remove('hidden')
   clearTimeout(toast._t)
   toast._t = setTimeout(() => el.classList.add('hidden'), ms)
+}
+
+function toastErr(msg) {
+  toast(msg, 4500)
 }
 
 function fmtSize(n) {
@@ -62,6 +94,29 @@ function defaultServerHost() {
   const { hostname, host, port } = window.location
   if (hostname && port === '8787') return host
   return ''
+}
+
+function isLocalServerMode() {
+  return !!defaultServerHost()
+}
+
+function confirmAction(msg) {
+  return window.confirm(msg)
+}
+
+function clearLocalRecords() {
+  localStorage.removeItem(STORAGE_KEY)
+  localStorage.removeItem(STORAGE_SHARED_SEEN)
+  seenShared = new Set()
+  server = ''
+  connected = false
+  root = 'uploads'
+  subPath = '/'
+  $('#upload-queue').innerHTML = ''
+  $('#input-server').value = ''
+  setStatus(false, '未连接')
+  showSetup()
+  toast('已清除本地记录')
 }
 
 function guessSubnets() {
@@ -236,17 +291,20 @@ async function ping() {
 }
 
 async function connect(url) {
-  server = normalizeServer(url)
+  server = pageServerOrigin() || normalizeServer(url)
   const info = await ping()
   localStorage.setItem(STORAGE_KEY, server)
   connected = true
-  setStatus(true, `${info.ip}:${info.port}`)
+  const label = pageServerOrigin() ? `本机 · ${info.ip}:${info.port}` : `${info.ip}:${info.port}`
+  setStatus(true, label)
   showMain()
   root = 'uploads'
   subPath = '/'
   syncTabs('browse')
   updateTitle()
   await loadFiles()
+  window.LanShareAds?.refresh?.()
+  window.LanShareUpdate?.refresh?.()
   return info
 }
 
@@ -265,6 +323,8 @@ function showMain() {
 
 function updateTitle() {
   $('#top-title').textContent = root === 'uploads' ? '手机上传' : '电脑共享'
+  const hint = $('#shared-hint')
+  if (hint) hint.classList.toggle('hidden', root !== 'shared')
 }
 
 function syncTabs(tab, rootOverride) {
@@ -293,6 +353,63 @@ function encodePathSegments(p) {
   return p.replace(/^\//, '').split('/').filter(Boolean).map(encodeURIComponent).join('/')
 }
 
+function currentBrowsePath() {
+  if (subPath === '/') return ''
+  return subPath.replace(/^\//, '').replace(/\/$/, '')
+}
+
+async function deleteItem(rel, name, isDir) {
+  const kind = isDir ? '文件夹' : '文件'
+  if (!confirmAction(`确定删除${kind}「${name}」？\n删除后电脑上的该${kind}将不可恢复。`)) return false
+  try {
+    const res = await fetch(api(`/api/delete/${root}?p=${encodeURIComponent(rel)}`), { method: 'POST' })
+    let data = {}
+    try {
+      data = await res.json()
+    } catch { /* ignore */ }
+    if (res.status === 404) {
+      throw new Error('删除接口不可用，请关闭后重新启动电脑端 LanShare')
+    }
+    if (!res.ok) throw new Error(data.error || '删除失败')
+    toast(`已删除：${name}`)
+    vibrate(8)
+    await loadFiles()
+    return true
+  } catch (e) {
+    toastErr(e.message || '删除失败')
+    return false
+  }
+}
+
+async function clearCurrentFolder() {
+  const label = root === 'uploads' ? '手机上传' : '电脑共享'
+  const folder = subPath === '/' ? label : `${label}${subPath}`
+  if (!confirmAction(`确定清空「${folder}」下的全部内容？\n此操作会删除电脑上的文件，不可恢复。`)) return
+  try {
+    const q = subPath === '/' ? '' : `?path=${encodeURIComponent(currentBrowsePath())}`
+    const res = await fetch(api(`/api/clear/${root}${q}`), { method: 'POST' })
+    let data = {}
+    try {
+      data = await res.json()
+    } catch { /* ignore */ }
+    if (res.status === 404) {
+      throw new Error('清空接口不可用，请关闭后重新启动电脑端 LanShare')
+    }
+    if (!res.ok) throw new Error(data.error || '清空失败')
+    toast(data.count ? `已清空 ${data.count} 项` : '当前文件夹已为空')
+    vibrate(10)
+    await loadFiles()
+  } catch (e) {
+    toastErr(e.message || '清空失败')
+  }
+}
+
+function updateClearFolderBtn(hasItems) {
+  const btn = $('#btn-clear-folder')
+  if (!btn) return
+  btn.classList.toggle('hidden', !connected || !hasItems)
+}
+
 async function loadFiles() {
   if (loading) return
   loading = true
@@ -307,9 +424,11 @@ async function loadFiles() {
     const list = $('#file-list')
     if (!data.items.length) {
       list.innerHTML = renderEmpty('暂无文件')
+      updateClearFolderBtn(false)
       return
     }
 
+    updateClearFolderBtn(true)
     list.innerHTML = ''
     const frag = document.createDocumentFragment()
     for (const it of data.items) {
@@ -334,16 +453,40 @@ async function loadFiles() {
           if (!subPath.startsWith('/')) subPath = '/' + subPath
           loadFiles()
         }
+        const actions = document.createElement('div')
+        actions.className = 'file-actions'
+        const delBtn = document.createElement('button')
+        delBtn.className = 'file-action danger'
+        delBtn.textContent = '删除'
+        delBtn.onclick = async (e) => {
+          e.stopPropagation()
+          await deleteItem(rel, it.name, true)
+        }
+        actions.appendChild(delBtn)
+        row.appendChild(actions)
       } else {
+        const actions = document.createElement('div')
+        actions.className = 'file-actions'
         const btn = document.createElement('button')
         btn.className = 'file-action'
-        btn.textContent = '下载'
-        btn.onclick = (e) => {
+        btn.textContent = root === 'shared' ? '保存' : '下载'
+        btn.onclick = async (e) => {
           e.stopPropagation()
           vibrate()
-          downloadFile(it.downloadUrl || `/api/download/${root}?p=${encodeURIComponent(rel)}`, it.name)
+          const dl = it.downloadUrl || `/api/download/${root}?p=${encodeURIComponent(rel)}`
+          markSharedSeen(`${rel}:${it.mtime}`)
+          await downloadFile(dl, it.name)
         }
-        row.appendChild(btn)
+        const delBtn = document.createElement('button')
+        delBtn.className = 'file-action danger'
+        delBtn.textContent = '删除'
+        delBtn.onclick = async (e) => {
+          e.stopPropagation()
+          await deleteItem(rel, it.name, false)
+        }
+        actions.appendChild(btn)
+        actions.appendChild(delBtn)
+        row.appendChild(actions)
       }
       frag.appendChild(row)
     }
@@ -355,36 +498,80 @@ async function loadFiles() {
     $('#btn-retry')?.addEventListener('click', showSetup)
     setStatus(false, '连接断开')
     connected = false
+    updateClearFolderBtn(false)
   } finally {
     loading = false
   }
 }
 
-async function downloadFile(path, name) {
-  toast('下载中…')
-  try {
-    const res = await fetch(api(path))
-    if (!res.ok) throw new Error('下载失败')
-    const blob = await res.blob()
-    const url = URL.createObjectURL(blob)
+async function downloadFile(path, name, auto = false) {
+  const url = path.startsWith('http') ? path : api(path)
+  const fname = name || 'download'
+
+  if (window.LanShareNative?.downloadFile) {
+    const result = window.LanShareNative.downloadFile(url, fname)
+    if (result === 'ok') {
+      toast(auto ? `已自动保存：${fname}` : `已保存到「下载」：${fname}`, auto ? 2500 : 3000)
+      return true
+    }
+    if (!auto) toastErr(result || '下载失败')
+    return false
+  }
+
+  if (!auto) toast('下载中…')
+  if (url.startsWith('http')) {
     const a = document.createElement('a')
     a.href = url
-    a.download = name || 'download'
+    a.download = fname
+    a.style.display = 'none'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    toast(auto ? `已开始保存：${fname}` : '已开始下载，请查看通知栏')
+    return true
+  }
+
+  try {
+    const res = await fetch(url)
+    if (!res.ok) {
+      const reason = res.status === 404 ? '文件不存在或已被删除' : `下载失败 (HTTP ${res.status})`
+      throw new Error(reason)
+    }
+    const blob = await res.blob()
+    const blobUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = fname
     a.style.display = 'none'
     document.body.appendChild(a)
     a.click()
     setTimeout(() => {
-      URL.revokeObjectURL(url)
+      URL.revokeObjectURL(blobUrl)
       a.remove()
     }, 1000)
-    toast('已保存')
+    toast(auto ? `已自动保存：${fname}` : '已保存')
+    return true
   } catch (e) {
-    toast(e.message || '下载失败')
+    if (!auto) toastErr(e.message || '下载失败')
+    return false
   }
 }
 
-function escapeHtml(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+function uploadErrorFromXhr(xhr) {
+  if (xhr.status === 0) {
+    if (!connected || !server) return '未连接电脑，请先在首页连接'
+    return '网络中断：请确认手机与电脑在同一 WiFi，且电脑 LanShare 正在运行'
+  }
+  let data = {}
+  try {
+    data = JSON.parse(xhr.responseText || '{}')
+  } catch { /* ignore */ }
+  if (xhr.status === 413) return '文件过大，电脑端无法接收'
+  if (xhr.status === 400) return data.error || '请求无效，请重试'
+  if (xhr.status === 404) return '上传接口不存在，请更新电脑端 LanShare 到最新版'
+  if (xhr.status >= 500) return data.error ? `电脑端保存失败：${data.error}` : '电脑端保存失败，请查看电脑窗口日志'
+  if (data.error) return data.error
+  return `上传失败 (HTTP ${xhr.status})`
 }
 
 function uploadFile(file, onProgress) {
@@ -393,20 +580,23 @@ function uploadFile(file, onProgress) {
     fd.append('files', file)
     const q = subPath === '/' ? '' : `&path=${encodeURIComponent(subPath)}`
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', api(`/api/upload?target=${root}${q}`))
+    xhr.open('POST', api(`/api/upload?target=uploads${q}`))
+    xhr.timeout = 600000
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100))
     }
     xhr.onload = () => {
       try {
-        const data = JSON.parse(xhr.responseText)
+        const data = JSON.parse(xhr.responseText || '{}')
         if (xhr.status >= 200 && xhr.status < 300 && data.ok) resolve(data)
-        else reject(new Error(data.error || '上传失败'))
+        else reject(new Error(uploadErrorFromXhr(xhr)))
       } catch {
-        reject(new Error('上传失败'))
+        reject(new Error(uploadErrorFromXhr(xhr)))
       }
     }
-    xhr.onerror = () => reject(new Error('网络错误'))
+    xhr.onerror = () => reject(new Error('网络错误：无法连接电脑，请检查 WiFi 与防火墙 8787 端口'))
+    xhr.ontimeout = () => reject(new Error('上传超时：文件过大或网络不稳定，请靠近路由器后重试'))
+    xhr.onabort = () => reject(new Error('上传已取消'))
     xhr.send(fd)
   })
 }
@@ -414,6 +604,9 @@ function uploadFile(file, onProgress) {
 async function handleFiles(files) {
   vibrate(10)
   const queue = $('#upload-queue')
+  let ok = 0
+  let fail = 0
+  let lastErr = ''
   for (const file of files) {
     const job = document.createElement('div')
     job.className = 'upload-job'
@@ -431,15 +624,41 @@ async function handleFiles(files) {
         status.textContent = `${pct}%`
       })
       bar.style.width = '100%'
-      status.textContent = '完成'
+      status.textContent = '已保存到电脑'
       status.style.color = 'var(--ok)'
+      ok++
     } catch (e) {
-      status.textContent = e.message
+      const msg = e.message || '上传失败'
+      status.textContent = msg
       status.style.color = 'var(--err)'
+      fail++
+      lastErr = msg
     }
   }
-  toast('上传完成')
+  if (fail && ok) toastErr(`部分失败：${ok} 个成功，${fail} 个失败。原因：${lastErr}`)
+  else if (fail) toastErr(`上传失败：${lastErr}`)
+  else toast(`已上传到电脑（${ok} 个文件）`)
   if (!$('#panel-browse').classList.contains('hidden')) loadFiles()
+}
+
+async function pollSharedIncoming() {
+  if (!connected || !getApiBase()) return
+  try {
+    const res = await fetch(api('/api/browse/shared'), { cache: 'no-store' })
+    const data = await res.json()
+    if (!res.ok) return
+    for (const it of data.items) {
+      if (it.isDir) continue
+      const key = `${it.rel}:${it.mtime}`
+      if (seenShared.has(key)) continue
+      markSharedSeen(key)
+      await downloadFile(it.downloadUrl || `/api/download/shared?p=${encodeURIComponent(it.rel)}`, it.name, true)
+    }
+  } catch { /* ignore */ }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
 window.__pullRefresh = () => {
@@ -460,6 +679,10 @@ window.__onBack = () => {
 
 $('#btn-connect').onclick = connectFromSetup
 $('#btn-rescan').onclick = () => { vibrate(); discoverServers() }
+$('#btn-clear-local').onclick = () => {
+  vibrate()
+  if (confirmAction('清除本地记录？\n将断开连接并清除保存的电脑地址与自动下载记忆。')) clearLocalRecords()
+}
 
 $('#btn-settings').onclick = showSetup
 
@@ -473,6 +696,7 @@ $('#btn-back').onclick = () => {
 }
 
 $('#btn-refresh').onclick = () => { vibrate(); loadFiles() }
+$('#btn-clear-folder').onclick = () => { vibrate(); clearCurrentFolder() }
 
 $('#btn-pick').onclick = () => $('#file-input').click()
 $('#upload-zone').onclick = (e) => {
@@ -518,11 +742,24 @@ setInterval(async () => {
   }
 }, 15000)
 
+setInterval(pollSharedIncoming, 4000)
+
 ;(async () => {
+  loadSeenShared()
   const ver = window.__LANSHARE_VERSION__ || ''
   if (ver) {
     $('#ver-tag').textContent = `LanShare v${ver}`
     $('#ver-bar').textContent = `v${ver}`
+  }
+  const localOrigin = pageServerOrigin()
+  if (localOrigin) {
+    try {
+      await connect(localOrigin)
+      return
+    } catch {
+      showSetup()
+      return
+    }
   }
   if (server) {
     try {
@@ -530,18 +767,9 @@ setInterval(async () => {
       return
     } catch {
       showSetup()
+      return
     }
-  } else {
-    const local = defaultServerHost()
-    if (local) {
-      try {
-        await connect(`http://${local}`)
-        return
-      } catch {
-        /* fall through to setup */
-      }
-    }
-    showSetup()
-    discoverServers()
   }
+  showSetup()
+  discoverServers()
 })()

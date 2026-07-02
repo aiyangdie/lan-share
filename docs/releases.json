@@ -1,27 +1,33 @@
 {
   "latest": {
-    "version": "1.2.0",
-    "tag": "v1.2.0",
+    "version": "1.4.0",
+    "tag": "v1.4.0",
     "date": "2026-07-02",
-    "summary": "UDP 自动发现 · 子网扫描 · Windows 一键启动 · 连接失败指引",
+    "summary": "运营后台 · 广告位 · 系统公告 · APK/EXE 在线更新",
     "assets": {
-      "windows": "lan-share-v1.2.0-windows-portable.zip",
-      "android": "lan-share-v1.2.0-android.apk",
-      "androidLocal": "downloads/lan-share-v1.2.0-android.apk"
+      "windows": "lan-share-v1.4.0-windows-portable.zip",
+      "android": "lan-share-v1.4.0-android.apk",
+      "androidLocal": "downloads/lan-share-v1.4.0-android.apk"
     }
   },
   "history": [
+    {
+      "tag": "v1.3.0",
+      "version": "1.3.0",
+      "date": "2026-07-02",
+      "summary": "广告后台 · 删除文件 · 自动保存共享"
+    },
+    {
+      "tag": "v1.2.0",
+      "version": "1.2.0",
+      "date": "2026-07-02",
+      "summary": "UDP 自动发现 · 子网扫描 · Windows 一键启动"
+    },
     {
       "tag": "v1.1.0",
       "version": "1.1.0",
       "date": "2026-06-25",
       "summary": "Windows 便携 exe、版本统一"
-    },
-    {
-      "tag": "v1.0.0",
-      "version": "1.0.0",
-      "date": "2026-06-25",
-      "summary": "开源首版、PWA、多平台 zip"
     }
   ],
   "repo": "aiyangdie/lan-share"

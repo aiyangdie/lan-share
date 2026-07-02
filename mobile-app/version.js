@@ -1,1 +1,2 @@
-window.__LANSHARE_VERSION__ = '1.2.0'
+window.__LANSHARE_VERSION__ = '1.4.0'
+window.__LANSHARE_VERSION_CODE__ = 10400

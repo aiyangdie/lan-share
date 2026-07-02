@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "updatedAt": 0,
+  "slots": {
+    "banner": {
+      "enabled": false,
+      "title": "LanShare 电脑互传",
+      "subtitle": "同一 WiFi 极速传文件，无需云盘",
+      "imageUrl": "",
+      "linkUrl": "https://aiyangdie.github.io/lan-share/",
+      "bgColor": "#4F46E5",
+      "textColor": "#FFFFFF",
+      "badge": "广告"
+    },
+    "setup": {
+      "enabled": false,
+      "title": "下载电脑端",
+      "subtitle": "电脑运行 LanShare 后，手机即可自动发现",
+      "imageUrl": "",
+      "linkUrl": "https://aiyangdie.github.io/lan-share/",
+      "bgColor": "#EEF2FF",
+      "textColor": "#4338CA",
+      "badge": "推荐"
+    }
+  }
+}

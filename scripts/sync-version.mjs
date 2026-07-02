@@ -34,7 +34,7 @@ if (fs.existsSync(manifestPath)) {
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
 }
 
-const versionJs = `window.__LANSHARE_VERSION__ = '${version}'\n`
+const versionJs = `window.__LANSHARE_VERSION__ = '${version}'\nwindow.__LANSHARE_VERSION_CODE__ = ${versionCode}\n`
 fs.writeFileSync(path.join(ROOT, 'mobile-app/version.js'), versionJs)
 
 console.log(`Synced version ${version} (versionCode ${versionCode})`)

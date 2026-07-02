@@ -68,10 +68,11 @@ for (const item of ['server.mjs', 'package.json', 'LICENSE', 'VERSION']) {
 cpDir(path.join(ROOT, 'node_modules'), path.join(stage, 'node_modules'))
 cpDir(path.join(ROOT, 'public'), path.join(stage, 'public'))
 cpDir(path.join(ROOT, 'mobile-app'), path.join(stage, 'mobile-app'))
+cpDir(path.join(ROOT, 'admin'), path.join(stage, 'admin'))
 ensureDir(path.join(stage, 'shared'))
 ensureDir(path.join(stage, 'uploads'))
 
-fs.writeFileSync(path.join(stage, '使用说明.txt'), `LanShare v${version}\n\n双击 LanShare.exe 启动\n手机连接 http://你的电脑IP:8787\n`)
+fs.writeFileSync(path.join(stage, '使用说明.txt'), `LanShare v${version}\n\n双击 LanShare.exe 启动\n手机连接 http://你的电脑IP:8787\n广告后台 http://你的电脑IP:8787/admin\n默认密码 lanshare2026（可用 ADMIN_PASSWORD 环境变量修改）\n`)
 fs.writeFileSync(path.join(stage, 'start-server.bat'), `@echo off\r\nchcp 65001 >nul\r\ncd /d "%~dp0"\r\nnode\\node.exe server.mjs\r\npause\r\n`)
 
 const csc = 'C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe'

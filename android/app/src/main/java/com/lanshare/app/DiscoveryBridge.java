@@ -1,11 +1,16 @@
 package com.lanshare.app;
 
+import android.app.DownloadManager;
 import android.content.Context;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.webkit.JavascriptInterface;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -93,6 +98,47 @@ public class DiscoveryBridge {
         } catch (Exception e) {
             return "";
         }
+    }
+
+    @JavascriptInterface
+    public String downloadFile(String url, String filename) {
+        if (url == null || url.isEmpty()) return "下载地址无效";
+        final String safeName = sanitizeFilename(filename);
+        final CountDownLatch latch = new CountDownLatch(1);
+        final String[] result = new String[1];
+        mainHandler.post(() -> {
+            try {
+                DownloadManager.Request req = new DownloadManager.Request(Uri.parse(url));
+                req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, safeName);
+                req.setTitle(safeName);
+                req.setDescription("LanShare 电脑共享");
+                req.setAllowedOverMetered(true);
+                req.setAllowedOverRoaming(true);
+                DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+                if (dm == null) {
+                    result[0] = "系统下载服务不可用";
+                } else {
+                    dm.enqueue(req);
+                    result[0] = "ok";
+                }
+            } catch (Exception e) {
+                result[0] = "下载失败: " + e.getMessage();
+            } finally {
+                latch.countDown();
+            }
+        });
+        try {
+            latch.await(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            return "下载启动超时";
+        }
+        return result[0] != null ? result[0] : "下载启动失败";
+    }
+
+    private String sanitizeFilename(String filename) {
+        String name = filename == null || filename.isEmpty() ? "download" : filename;
+        return name.replaceAll("[\\\\/:*?\"<>|]", "_");
     }
 
     @JavascriptInterface

@@ -1,0 +1,11 @@
+{
+  "version": "1.4.0",
+  "versionCode": 10400,
+  "android": {
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.4.0/lan-share-v1.4.0-android.apk"
+  },
+  "windows": {
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.4.0/lan-share-v1.4.0-windows-portable.zip"
+  },
+  "admin": "/admin"
+}

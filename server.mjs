@@ -9,6 +9,8 @@ import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 import Busboy from 'busboy'
 import { startDiscovery, scanSubnet } from './scripts/discovery.mjs'
+import { handleAdminRequest } from './admin/routes.mjs'
+import { checkWindowsUpdate } from './admin/config-store.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -71,8 +73,9 @@ const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Range')
+  res.setHeader('Access-Control-Max-Age', '86400')
 }
 
 function json(res, code, data) {
@@ -164,20 +167,53 @@ function listDir(absDir, relSub, rootKey) {
     })
 }
 
+function removeEntry(base, sub) {
+  const normalized = String(sub || '').replace(/\\/g, '/').replace(/^\/+/, '')
+  const abs = resolveFile(base, normalized)
+  if (!abs || !fs.existsSync(abs)) throw new Error('文件不存在或已被删除')
+  const resolvedBase = path.resolve(base)
+  if (!path.resolve(abs).startsWith(resolvedBase)) throw new Error('路径非法')
+  const deleted = fixMojibake(path.basename(abs))
+  fs.rmSync(abs, { recursive: true, force: true })
+  return deleted
+}
+
+function clearDirectory(absDir) {
+  if (!fs.existsSync(absDir)) return 0
+  let count = 0
+  for (const name of fs.readdirSync(absDir)) {
+    fs.rmSync(path.join(absDir, name), { recursive: true, force: true })
+    count++
+  }
+  return count
+}
+
 function parseUpload(req, destDir) {
   return new Promise((resolve, reject) => {
     fs.mkdirSync(destDir, { recursive: true })
     const saved = []
+    const pending = []
     const bb = Busboy({ headers: req.headers })
     bb.on('file', (_name, stream, info) => {
       const filename = path.basename(info.filename || `file-${Date.now()}`)
       const dest = path.join(destDir, filename)
-      const ws = fs.createWriteStream(dest)
-      stream.pipe(ws)
-      saved.push(filename)
+      pending.push(
+        new Promise((res, rej) => {
+          const ws = fs.createWriteStream(dest)
+          stream.pipe(ws)
+          ws.on('finish', () => {
+            saved.push(filename)
+            res()
+          })
+          ws.on('error', rej)
+          stream.on('error', rej)
+        })
+      )
     })
     bb.on('error', reject)
-    bb.on('finish', () => resolve(saved))
+    bb.on('finish', () => {
+      Promise.all(pending).then(() => resolve(saved)).catch(reject)
+    })
     req.pipe(bb)
   })
 }
@@ -202,6 +238,8 @@ const server = http.createServer(async (req, res) => {
 
   try {
     const url = new URL(req.url, `http://${req.headers.host}`)
+
+    if (await handleAdminRequest(req, res, url)) return
 
     if (req.method === 'GET' && url.pathname === '/api/health') {
       return json(res, 200, {
@@ -337,6 +375,28 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true, saved, count: saved.length })
     }
 
+    const delMatch = url.pathname.match(/^\/api\/delete\/(shared|uploads)$/)
+    if ((req.method === 'DELETE' || req.method === 'POST') && delMatch) {
+      const key = delMatch[1]
+      const sub = decodeRelPath(url.searchParams.get('p') || '').replace(/^\//, '')
+      if (!sub) return json(res, 400, { error: '缺少路径' })
+      const name = removeEntry(rootDir(key), sub)
+      return json(res, 200, { ok: true, deleted: name })
+    }
+
+    const clearMatch = url.pathname.match(/^\/api\/clear\/(shared|uploads)$/)
+    if ((req.method === 'DELETE' || req.method === 'POST') && clearMatch) {
+      const key = clearMatch[1]
+      const sub = decodeRelPath(url.searchParams.get('path') || '').replace(/^\//, '')
+      const base = rootDir(key)
+      const abs = sub ? safeResolve(base, sub) : base
+      if (!fs.existsSync(abs) || !fs.statSync(abs).isDirectory()) {
+        return json(res, 400, { error: '不是文件夹' })
+      }
+      const count = clearDirectory(abs)
+      return json(res, 200, { ok: true, count })
+    }
+
     // 静态页（浏览器备用）
     const staticRoots = [PUBLIC_DIR, MOBILE_DIR]
     if (req.method === 'GET') {
@@ -369,5 +429,14 @@ server.listen(PORT, HOST, () => {
   console.log('')
   console.log(`  Uploads  → ${UPLOAD_DIR}`)
   console.log(`  Shared   → ${SHARED_DIR}`)
+  console.log(`  Admin    → http://${ip}:${PORT}/admin  (密码: 环境变量 ADMIN_PASSWORD 或默认 lanshare2026)`)
+  const winUpdate = checkWindowsUpdate(VERSION)
+  if (winUpdate) {
+    console.log('')
+    console.log(`  ⚠ 发现新版本 v${winUpdate.version}（当前 v${VERSION}）`)
+    console.log(`  下载: ${winUpdate.url}`)
+    if (winUpdate.changelog) console.log(`  说明: ${winUpdate.changelog.split('\n')[0]}`)
+    console.log('')
+  }
   console.log('')
 })

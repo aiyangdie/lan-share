@@ -33,6 +33,60 @@ html, body {
 
 .hidden { display: none !important; }
 
+/* ── Announce & Update ── */
+.announce-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px calc(10px + var(--safe-t));
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+.announce-bar.level-info { background: #EEF2FF; color: #3730A3; }
+.announce-bar.level-warn { background: #FEF3C7; color: #92400E; }
+.announce-bar.level-urgent { background: #FEE2E2; color: #991B1B; }
+.announce-inner { flex: 1; min-width: 0; }
+.announce-inner strong { display: block; margin-bottom: 2px; }
+.announce-inner a { color: inherit; font-weight: 600; margin-left: 6px; }
+.announce-close {
+  border: none; background: transparent;
+  font-size: 1.25rem; line-height: 1; cursor: pointer;
+  color: inherit; opacity: .7; padding: 0 4px;
+}
+
+.modal {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.modal-card {
+  width: min(360px, 100%);
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow-lg);
+}
+.modal-card h3 { margin: 0 0 8px; font-size: 1.125rem; }
+.update-mandatory { margin: 0 0 8px; color: var(--err); font-size: 0.8125rem; }
+.update-changelog {
+  margin: 0 0 16px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  max-height: 160px;
+  overflow: auto;
+}
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-actions .btn { flex: 1; }
+
 .screen {
   height: 100dvh;
   display: flex;
@@ -294,6 +348,77 @@ html, body {
   padding-bottom: calc(80px + var(--safe-b));
 }
 
+body.has-ad-banner .panel {
+  padding-bottom: calc(148px + var(--safe-b));
+}
+
+/* ── Ad slots ── */
+.ad-slot {
+  margin: 0 0 12px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.ad-slot-banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(76px + var(--safe-b));
+  margin: 0;
+  z-index: 9;
+}
+
+.ad-slot-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.ad-slot-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: rgba(255,255,255,.15);
+  flex-shrink: 0;
+}
+
+.ad-slot-img.hidden { display: none; }
+
+.ad-slot-meta { flex: 1; min-width: 0; }
+
+.ad-slot-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ad-slot-sub {
+  font-size: 0.75rem;
+  opacity: .88;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ad-slot-badge {
+  font-size: 0.625rem;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.2);
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+#screen-setup .ad-slot { margin-top: -8px; }
+
 .path-bar {
   display: flex;
   align-items: center;
@@ -303,6 +428,16 @@ html, body {
   border-radius: var(--radius-sm);
   padding: 4px 4px 4px 8px;
   box-shadow: var(--shadow);
+}
+
+.shared-hint {
+  margin: -4px 0 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  background: rgba(79, 70, 229, 0.08);
+  border-radius: var(--radius-sm);
 }
 
 .path-btn {
@@ -394,6 +529,34 @@ html, body {
 }
 
 .file-action:active { background: rgba(79, 70, 229, 0.15); }
+
+.file-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.file-action.danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.file-action.danger:active { background: rgba(239, 68, 68, 0.18); }
+
+.path-btn-danger { color: #dc2626; }
+
+.settings-card .settings-title {
+  margin: 0 0 6px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.settings-card .settings-desc {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
 
 .empty-state {
   flex: 1;

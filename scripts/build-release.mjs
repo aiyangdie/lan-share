@@ -89,6 +89,7 @@ for (const f of ['server.mjs', 'package.json', 'package-lock.json', 'LICENSE', '
 copyDir(path.join(ROOT, 'node_modules'), path.join(serverStage, 'node_modules'))
 copyDir(path.join(ROOT, 'public'), path.join(serverStage, 'public'))
 copyDir(path.join(ROOT, 'mobile-app'), path.join(serverStage, 'mobile-app'))
+copyDir(path.join(ROOT, 'admin'), path.join(serverStage, 'admin'))
 ensureDir(path.join(serverStage, 'shared'))
 ensureDir(path.join(serverStage, 'uploads'))
 

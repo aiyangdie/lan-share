@@ -14,6 +14,20 @@
 </head>
 <body>
   <div id="app">
+    <div id="announce-bar" class="announce-bar hidden" aria-live="polite"></div>
+
+    <div id="update-modal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modal-card">
+        <h3 id="update-title">发现新版本</h3>
+        <p id="update-mandatory" class="update-mandatory hidden">此版本为强制更新</p>
+        <pre id="update-changelog" class="update-changelog"></pre>
+        <div class="modal-actions">
+          <button class="btn ghost" id="btn-update-later" type="button">稍后</button>
+          <button class="btn primary" id="btn-update-now" type="button">立即更新</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 连接 -->
     <section id="screen-setup" class="screen hidden">
       <div class="setup-wrap">
@@ -24,6 +38,8 @@
           <h1>电脑互传</h1>
           <p>同一 WiFi，手机与电脑互传文件</p>
         </div>
+
+        <div id="ad-setup" class="ad-slot hidden" aria-label="推荐"></div>
 
         <div class="card">
           <div class="discover-head">
@@ -41,6 +57,12 @@
             <input id="input-server" type="url" inputmode="url" placeholder="192.168.x.x:8787" autocomplete="off" />
           </label>
           <button class="btn primary full" id="btn-connect">连接</button>
+        </div>
+
+        <div class="card settings-card">
+          <p class="settings-title">本地记录</p>
+          <p class="settings-desc">清除手机保存的连接地址、自动下载记忆，不会删除电脑上的文件</p>
+          <button class="btn ghost full" id="btn-clear-local" type="button">清除本地记录</button>
         </div>
 
         <div id="setup-help" class="setup-help hidden">
@@ -84,10 +106,14 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <div class="path-text" id="path-label">手机上传</div>
+          <button class="path-btn path-btn-danger hidden" id="btn-clear-folder" aria-label="清空当前文件夹" title="清空当前文件夹">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+          </button>
           <button class="path-btn" id="btn-refresh" aria-label="刷新">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
           </button>
         </div>
+        <p id="shared-hint" class="shared-hint hidden">电脑放入 shared 文件夹的新文件会自动保存到手机「下载」</p>
         <div class="file-list" id="file-list"></div>
       </div>
 
@@ -98,12 +124,14 @@
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4"/><path d="m8 8 4-4 4 4"/><path d="M4 20h16"/></svg>
           </div>
           <p class="upload-title">选择文件上传</p>
-          <p class="upload-desc">照片、视频、文档 · 保存到电脑</p>
+          <p class="upload-desc">真实上传到电脑 uploads 文件夹 · 失败会显示具体原因</p>
           <input type="file" id="file-input" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip,.apk" hidden />
           <button class="btn primary" id="btn-pick">选择文件</button>
         </div>
         <div id="upload-queue" class="upload-queue"></div>
       </div>
+
+      <div id="ad-banner" class="ad-slot ad-slot-banner hidden" aria-label="广告"></div>
 
       <nav class="tabbar">
         <button class="tab active" data-tab="browse">
@@ -121,7 +149,10 @@
       </nav>
     </section>
   </div>
+  <script src="config.js"></script>
   <script src="version.js"></script>
   <script src="app.js"></script>
+  <script src="ads.js"></script>
+  <script src="update.js"></script>
 </body>
 </html>

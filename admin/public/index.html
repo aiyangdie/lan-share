@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LanShare 运营后台</title>
+  <link rel="stylesheet" href="/admin/admin.css" />
+</head>
+<body>
+  <div id="app">
+    <section id="screen-login" class="screen">
+      <div class="login-card">
+        <div class="logo">LanShare</div>
+        <h1>运营后台</h1>
+        <p>管理广告、系统公告、APK / 电脑端在线更新</p>
+        <label class="field">
+          <span>管理密码</span>
+          <input id="input-password" type="password" placeholder="默认 lanshare2026" autocomplete="current-password" />
+        </label>
+        <button class="btn primary" id="btn-login">登录</button>
+        <p class="hint">可通过环境变量 ADMIN_PASSWORD 修改密码</p>
+      </div>
+    </section>
+
+    <section id="screen-dashboard" class="screen hidden">
+      <header class="topbar">
+        <div>
+          <h1>运营后台</h1>
+          <p id="save-status">加载中…</p>
+        </div>
+        <div class="topbar-actions">
+          <a class="btn ghost" href="/api/update?platform=android" target="_blank" rel="noopener">更新 API</a>
+          <button class="btn ghost" id="btn-logout">退出</button>
+        </div>
+      </header>
+
+      <nav class="tabs">
+        <button class="tab active" data-tab="ads">广告位</button>
+        <button class="tab" data-tab="announce">系统公告</button>
+        <button class="tab" data-tab="update">版本更新</button>
+      </nav>
+
+      <main class="main">
+        <section id="panel-ads" class="panel">
+          <div class="info-card">
+            <strong>广告位</strong> · 手机从 <code>/api/ads</code> 拉取
+          </div>
+          <div class="grid">
+            <article class="slot-card" data-slot="banner">
+              <div class="slot-head">
+                <h2>底部横幅 · banner</h2>
+                <label class="switch"><input type="checkbox" data-field="enabled" /><span>启用</span></label>
+              </div>
+              <div class="preview" data-preview></div>
+              <div class="form">
+                <label class="field"><span>标题</span><input data-field="title" maxlength="80" /></label>
+                <label class="field"><span>副标题</span><input data-field="subtitle" maxlength="160" /></label>
+                <label class="field"><span>图片 URL</span><input data-field="imageUrl" placeholder="https://..." /></label>
+                <label class="field"><span>跳转链接</span><input data-field="linkUrl" placeholder="https://..." /></label>
+                <div class="row2">
+                  <label class="field"><span>背景色</span><input data-field="bgColor" type="color" /></label>
+                  <label class="field"><span>文字色</span><input data-field="textColor" type="color" /></label>
+                </div>
+                <label class="field"><span>角标</span><input data-field="badge" maxlength="12" /></label>
+              </div>
+            </article>
+            <article class="slot-card" data-slot="setup">
+              <div class="slot-head">
+                <h2>连接页推荐 · setup</h2>
+                <label class="switch"><input type="checkbox" data-field="enabled" /><span>启用</span></label>
+              </div>
+              <div class="preview" data-preview></div>
+              <div class="form">
+                <label class="field"><span>标题</span><input data-field="title" maxlength="80" /></label>
+                <label class="field"><span>副标题</span><input data-field="subtitle" maxlength="160" /></label>
+                <label class="field"><span>图片 URL</span><input data-field="imageUrl" placeholder="https://..." /></label>
+                <label class="field"><span>跳转链接</span><input data-field="linkUrl" placeholder="https://..." /></label>
+                <div class="row2">
+                  <label class="field"><span>背景色</span><input data-field="bgColor" type="color" /></label>
+                  <label class="field"><span>文字色</span><input data-field="textColor" type="color" /></label>
+                </div>
+                <label class="field"><span>角标</span><input data-field="badge" maxlength="12" /></label>
+              </div>
+            </article>
+          </div>
+          <div class="section-save"><button class="btn primary" id="btn-save-ads">保存广告</button></div>
+        </section>
+
+        <section id="panel-announce" class="panel hidden">
+          <div class="info-card">
+            <strong>系统公告</strong> · 手机 / 电脑打开时顶部展示，用户可关闭
+          </div>
+          <article class="slot-card" data-config="announcement">
+            <div class="slot-head">
+              <h2>全站公告</h2>
+              <label class="switch"><input type="checkbox" data-field="enabled" /><span>启用</span></label>
+            </div>
+            <div class="form">
+              <label class="field"><span>标题</span><input data-field="title" maxlength="80" /></label>
+              <label class="field"><span>内容</span><textarea data-field="message" rows="4" maxlength="500"></textarea></label>
+              <label class="field"><span>链接（可选）</span><input data-field="linkUrl" placeholder="https://..." /></label>
+              <label class="field"><span>级别</span>
+                <select data-field="level">
+                  <option value="info">普通</option>
+                  <option value="warn">重要</option>
+                  <option value="urgent">紧急</option>
+                </select>
+              </label>
+            </div>
+          </article>
+          <div class="section-save"><button class="btn primary" id="btn-save-config">保存公告</button></div>
+        </section>
+
+        <section id="panel-update" class="panel hidden">
+          <div class="info-card">
+            <strong>在线更新</strong> · 客户端从 <code>/api/update</code> 检查，填 GitHub Release 下载地址即可
+          </div>
+          <div class="grid">
+            <article class="slot-card" data-config="android">
+              <div class="slot-head"><h2>Android APK</h2></div>
+              <div class="form">
+                <label class="field"><span>最新版本号</span><input data-field="version" placeholder="1.4.0" /></label>
+                <label class="field"><span>versionCode（整数）</span><input data-field="versionCode" type="number" placeholder="10400" /></label>
+                <label class="field"><span>APK 下载地址</span><input data-field="url" placeholder="https://github.com/.../xxx.apk" /></label>
+                <label class="field"><span>更新说明</span><textarea data-field="changelog" rows="3"></textarea></label>
+                <label class="switch"><input type="checkbox" data-field="mandatory" /><span>强制更新</span></label>
+              </div>
+            </article>
+            <article class="slot-card" data-config="windows">
+              <div class="slot-head"><h2>Windows 电脑端</h2></div>
+              <div class="form">
+                <label class="field"><span>最新版本号</span><input data-field="version" placeholder="1.4.0" /></label>
+                <label class="field"><span>ZIP 下载地址</span><input data-field="url" placeholder="https://github.com/.../portable.zip" /></label>
+                <label class="field"><span>更新说明</span><textarea data-field="changelog" rows="3"></textarea></label>
+                <label class="switch"><input type="checkbox" data-field="mandatory" /><span>强制更新</span></label>
+              </div>
+            </article>
+          </div>
+          <div class="section-save"><button class="btn primary" id="btn-save-config2">保存版本配置</button></div>
+        </section>
+      </main>
+    </section>
+  </div>
+  <script src="/admin/admin.js"></script>
+</body>
+</html>

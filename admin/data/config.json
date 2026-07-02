@@ -1,0 +1,23 @@
+{
+  "updatedAt": 0,
+  "announcement": {
+    "enabled": false,
+    "title": "",
+    "message": "",
+    "linkUrl": "",
+    "level": "info"
+  },
+  "android": {
+    "version": "1.4.0",
+    "versionCode": 10400,
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.4.0/lan-share-v1.4.0-android.apk",
+    "mandatory": false,
+    "changelog": "运营后台 · 广告位 · 系统公告 · APK/EXE 在线更新"
+  },
+  "windows": {
+    "version": "1.4.0",
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.4.0/lan-share-v1.4.0-windows-portable.zip",
+    "mandatory": false,
+    "changelog": "广告后台 · 在线更新 · 系统公告"
+  }
+}

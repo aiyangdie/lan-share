@@ -3,6 +3,7 @@
     "assets": [
       "public/**/*",
       "mobile-app/**/*",
+      "admin/**/*",
       "package.json"
     ],
     "outputPath": "releases"

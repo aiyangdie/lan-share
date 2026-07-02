@@ -1,6 +1,6 @@
 {
   "name": "lan-share",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "Transfer files between phone and PC over local WiFi — no cloud, no account",
   "license": "MIT",
   "author": "aiyangdie <aike1015@qq.com>",

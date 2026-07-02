@@ -1,0 +1,17 @@
+LanShare 广告后台 v1.3.0
+
+访问地址（电脑端 LanShare 启动后）：
+  http://127.0.0.1:8787/admin
+  或 http://你的电脑IP:8787/admin
+
+默认密码：lanshare2026
+修改密码：设置环境变量 ADMIN_PASSWORD
+
+公开 API（供 APK 拉取广告）：
+  GET /api/ads
+
+广告位：
+  banner  - 主界面底部横幅（Tab 上方）
+  setup   - 连接页推荐卡片
+
+配置文件：admin/data/ads.json
