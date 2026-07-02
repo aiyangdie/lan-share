@@ -1,6 +1,6 @@
 {
   "name": "lan-share",
-  "version": "1.4.0",
+  "version": "1.5.000",
   "description": "Transfer files between phone and PC over local WiFi — no cloud, no account",
   "license": "MIT",
   "author": "aiyangdie <aike1015@qq.com>",
@@ -27,6 +27,12 @@
   "scripts": {
     "start": "node server.mjs",
     "sync": "node scripts/sync-version.mjs && node scripts/sync-mobile.mjs",
+    "version:bump": "node scripts/bump-version.mjs",
+    "version:sync": "node scripts/sync-version.mjs",
+    "commit": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/commit-release.ps1",
+    "desktop:install": "npm install --prefix desktop",
+    "desktop:dev": "npm run dev --prefix desktop",
+    "desktop:build": "npm run build:ui --prefix desktop && npm run dist --prefix desktop",
     "build:exe": "node scripts/build-exe.mjs",
     "build:apk": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-apk.ps1",
     "build:release": "node scripts/build-release.mjs"

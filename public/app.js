@@ -313,7 +313,41 @@ function showSetup() {
   $('#screen-main').classList.add('hidden')
   const saved = server.replace(/^https?:\/\//, '')
   $('#input-server').value = saved || defaultServerHost()
+  $('#pc-settings')?.classList.toggle('hidden', !pageServerOrigin())
+  if (pageServerOrigin()) loadPcSettings()
   discoverServers()
+}
+
+async function loadPcSettings() {
+  try {
+    const res = await fetch(api('/api/settings'))
+    const data = await res.json()
+    if (!res.ok) return
+    const s = data.settings
+    $('#pc-upload-dir').value = s.uploadDir || ''
+    $('#pc-shared-dir').value = s.sharedDir || ''
+    $('#pc-port').value = s.port || 8787
+  } catch { /* ignore */ }
+}
+
+async function savePcSettings() {
+  try {
+    const body = {
+      uploadDir: $('#pc-upload-dir').value.trim(),
+      sharedDir: $('#pc-shared-dir').value.trim(),
+      port: Number($('#pc-port').value),
+    }
+    const res = await fetch(api('/api/settings'), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || '保存失败')
+    toast(data.restartRequired ? '已保存，请重启 LanShare 服务' : '电脑设置已保存')
+  } catch (e) {
+    toastErr(e.message || '保存失败')
+  }
 }
 
 function showMain() {
@@ -683,6 +717,7 @@ $('#btn-clear-local').onclick = () => {
   vibrate()
   if (confirmAction('清除本地记录？\n将断开连接并清除保存的电脑地址与自动下载记忆。')) clearLocalRecords()
 }
+$('#btn-save-pc-settings').onclick = () => { vibrate(); savePcSettings() }
 
 $('#btn-settings').onclick = showSetup
 

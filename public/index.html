@@ -59,6 +59,24 @@
           <button class="btn primary full" id="btn-connect">连接</button>
         </div>
 
+        <div id="pc-settings" class="card settings-card hidden">
+          <p class="settings-title">电脑端设置</p>
+          <p class="settings-desc">配置保存路径与端口，修改后需重启服务</p>
+          <label class="field">
+            <span>手机上传目录</span>
+            <input id="pc-upload-dir" type="text" />
+          </label>
+          <label class="field">
+            <span>电脑共享目录</span>
+            <input id="pc-shared-dir" type="text" />
+          </label>
+          <label class="field">
+            <span>端口</span>
+            <input id="pc-port" type="number" min="1024" max="65535" />
+          </label>
+          <button class="btn primary full" id="btn-save-pc-settings" type="button">保存电脑设置</button>
+        </div>
+
         <div class="card settings-card">
           <p class="settings-title">本地记录</p>
           <p class="settings-desc">清除手机保存的连接地址、自动下载记忆，不会删除电脑上的文件</p>

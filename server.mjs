@@ -11,36 +11,24 @@ import Busboy from 'busboy'
 import { startDiscovery, scanSubnet } from './scripts/discovery.mjs'
 import { handleAdminRequest } from './admin/routes.mjs'
 import { checkWindowsUpdate } from './admin/config-store.mjs'
+import { readSettings, writeSettings, getDataBase, resolveLegacyDir } from './server/settings-store.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// exe/pkg 模式：数据目录在 exe 旁边，静态资源在打包快照内
-const IS_PKG = typeof process.pkg !== 'undefined'
 const APP_BASE = __dirname
-const DATA_BASE = IS_PKG || process.env.CAXA_EXECUTABLE
-  ? path.dirname(process.env.CAXA_EXECUTABLE || process.execPath)
-  : __dirname
+const DATA_BASE = getDataBase()
+const runtimeSettings = readSettings()
 
 let VERSION = '0.0.0'
 try {
   VERSION = JSON.parse(fs.readFileSync(path.join(APP_BASE, 'package.json'), 'utf8')).version
 } catch { /* dev fallback */ }
 
-const PORT = Number(process.env.PORT || 8787)
+const PORT = Number(process.env.PORT || runtimeSettings.port)
 const HOST = '0.0.0.0'
 
-function resolveDataDir(primary, legacy) {
-  const dir = path.join(DATA_BASE, primary)
-  fs.mkdirSync(dir, { recursive: true })
-  if (legacy) {
-    const leg = path.join(DATA_BASE, legacy)
-    if (fs.existsSync(leg)) return leg
-  }
-  return dir
-}
-
-const SHARED_DIR = resolveDataDir('shared', '共享给手机')
-const UPLOAD_DIR = resolveDataDir('uploads', '手机上传')
+const UPLOAD_DIR = resolveLegacyDir('uploads', '手机上传', runtimeSettings.uploadDir)
+const SHARED_DIR = resolveLegacyDir('shared', '共享给手机', runtimeSettings.sharedDir)
 const PUBLIC_DIR = path.join(APP_BASE, 'public')
 const MOBILE_DIR = path.join(APP_BASE, 'mobile-app')
 
@@ -73,9 +61,24 @@ const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Range')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Range, Authorization')
   res.setHeader('Access-Control-Max-Age', '86400')
+}
+
+function readJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = []
+    req.on('data', (c) => chunks.push(c))
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'))
+      } catch {
+        reject(new Error('JSON 格式错误'))
+      }
+    })
+    req.on('error', reject)
+  })
 }
 
 function json(res, code, data) {
@@ -251,6 +254,38 @@ const server = http.createServer(async (req, res) => {
         hostname: os.hostname(),
         time: Date.now(),
       })
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/settings') {
+      const s = readSettings()
+      return json(res, 200, {
+        ok: true,
+        settings: {
+          port: s.port,
+          uploadDir: UPLOAD_DIR,
+          sharedDir: SHARED_DIR,
+          openAtLogin: s.openAtLogin,
+          minimizeToTray: s.minimizeToTray,
+          startMinimized: s.startMinimized,
+          autoOpenBrowser: s.autoOpenBrowser,
+        },
+      })
+    }
+
+    if (req.method === 'PUT' && url.pathname === '/api/settings') {
+      try {
+        const body = await readJsonBody(req)
+        const next = writeSettings(body)
+        return json(res, 200, {
+          ok: true,
+          settings: next,
+          restartRequired: next.port !== PORT
+            || next.uploadDir !== runtimeSettings.uploadDir
+            || next.sharedDir !== runtimeSettings.sharedDir,
+        })
+      } catch (e) {
+        return json(res, 400, { error: e.message })
+      }
     }
 
     if (req.method === 'GET' && url.pathname === '/api/discover/peers') {

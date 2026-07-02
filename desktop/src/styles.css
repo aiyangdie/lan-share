@@ -1,0 +1,53 @@
+:root {
+  --bg: #0b1020;
+  --card: #121a2e;
+  --border: rgba(255,255,255,.08);
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --accent: #6366f1;
+  --accent2: #818cf8;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", "PingFang SC", sans-serif;
+  background: radial-gradient(circle at top, #1e1b4b, var(--bg) 50%);
+  color: var(--text);
+}
+.wrap { max-width: 480px; margin: 0 auto; padding: 24px 20px 32px; }
+.hero { display: flex; gap: 14px; align-items: center; margin-bottom: 20px; }
+.logo {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  display: grid; place-items: center; font-weight: 800;
+}
+.hero h1 { margin: 0; font-size: 1.25rem; }
+.hero p { margin: 4px 0 0; color: var(--muted); font-size: .875rem; line-height: 1.45; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.card h2 { margin: 0 0 12px; font-size: .95rem; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.field span { font-size: .78rem; color: var(--muted); }
+.field input {
+  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+  background: #0f172a; color: var(--text); font-size: .9rem;
+}
+.check { display: flex; gap: 8px; align-items: center; margin: 8px 0; font-size: .875rem; color: var(--muted); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.actions { display: flex; gap: 10px; margin-top: 8px; }
+.btn {
+  border: none; border-radius: 10px; padding: 10px 14px;
+  font-weight: 600; cursor: pointer; font-size: .9rem;
+}
+.btn.primary { background: var(--accent); color: #fff; flex: 1; }
+.btn.primary:hover { background: var(--accent2); }
+.btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.msg { margin-top: 12px; font-size: .85rem; color: #a5b4fc; }
+.muted { color: var(--muted); }
+.foot { margin-top: 16px; font-size: .75rem; color: var(--muted); text-align: center; }

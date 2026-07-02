@@ -106,6 +106,18 @@
     }
     .history-item:hover { border-color: rgba(129,140,248,.4); text-decoration: none; }
     .history-item small { display: block; color: var(--muted); font-size: .78rem; margin-top: 2px; }
+    .changelog-list { display: flex; flex-direction: column; gap: 10px; max-height: 520px; overflow: auto; padding-right: 4px; }
+    .changelog-item {
+      border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
+      background: rgba(255,255,255,.02);
+    }
+    .changelog-item .ver { font-weight: 700; color: #a5b4fc; font-family: ui-monospace, monospace; }
+    .changelog-item .meta { font-size: .78rem; color: var(--dim); margin-top: 4px; }
+    .changelog-item .tags { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
+    .changelog-item .tag-sm {
+      font-size: .68rem; padding: 2px 8px; border-radius: 999px;
+      background: rgba(129,140,248,.12); color: #c7d2fe;
+    }
 
     /* steps */
     .steps { counter-reset: step; display: flex; flex-direction: column; gap: 12px; }
@@ -167,6 +179,7 @@
       <a class="nav-brand" href="#">⇄ LanShare</a>
       <div class="nav-links">
         <a href="#download">下载</a>
+        <a href="#changelog">更新足迹</a>
         <a href="#features">特性</a>
         <a href="#architecture">架构</a>
         <a href="#tech">技术</a>
@@ -230,7 +243,15 @@
       <h2 style="margin-top:36px">历史版本</h2>
       <p class="section-desc">旧版安装包请前往 GitHub Releases（需能访问 GitHub）。</p>
       <div class="history-list" id="history-list"></div>
-      <p style="color:var(--dim);font-size:.82rem;margin-top:10px">全部版本：<a id="all-releases" href="#">GitHub Releases</a></p>
+      <p style="color:var(--dim);font-size:.82rem;margin-top:10px">全部版本：<a id="all-releases" href="#">GitHub Releases</a> · <a id="github-commits" href="#" target="_blank" rel="noopener">GitHub 提交记录</a></p>
+    </section>
+
+    <!-- 更新足迹 -->
+    <section id="changelog">
+      <h2>更新足迹 <span class="tag">细粒度留痕</span></h2>
+      <p class="section-desc">每次代码修改版本 <strong>+0.001</strong>（改 10 次 +0.01）。与 GitHub Commits 一一对应，App / 电脑端 / 官网同步。</p>
+      <div class="changelog-list" id="changelog-list"></div>
+      <p style="color:var(--dim);font-size:.82rem;margin-top:12px">完整记录：<code>docs/changelog.json</code> · 规范见仓库 <code>VERSIONING.md</code></p>
     </section>
 
     <!-- 架构 -->
@@ -481,6 +502,31 @@ npm run build:release                     # 打包全部安装包</code></pre>
       })
 
       document.getElementById('all-releases').href = `https://github.com/${repo}/releases`
+      document.getElementById('github-commits').href = `https://github.com/${repo}/commits/main`
+
+      await loadChangelog(repo)
+    }
+
+    async function loadChangelog(repo) {
+      const box = document.getElementById('changelog-list')
+      if (!box) return
+      try {
+        const log = await fetch('./changelog.json').then((r) => r.json())
+        box.innerHTML = ''
+        for (const item of (log.entries || []).slice(0, 80)) {
+          const el = document.createElement('div')
+          el.className = 'changelog-item'
+          const tags = (item.components || []).map((c) => `<span class="tag-sm">${c}</span>`).join('')
+          el.innerHTML = `
+            <div class="ver">v${item.version}</div>
+            <div>${item.summary}</div>
+            <div class="meta">${item.date}${item.versionCode ? ` · build ${item.versionCode}` : ''}</div>
+            <div class="tags">${tags}</div>`
+          box.appendChild(el)
+        }
+      } catch {
+        box.innerHTML = '<p style="color:var(--dim)">加载更新记录失败</p>'
+      }
     }
 
     init().catch(() => toast('加载版本信息失败，请刷新页面'))

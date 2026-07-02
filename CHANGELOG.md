@@ -2,7 +2,23 @@
 
 All notable changes are documented here. **Old release packages are kept in `releases/archive/`.**
 
-## [1.1.0] - 2026-06-25
+## 细粒度更新留痕
+
+> 每次代码修改版本 **+0.001**（改 10 次 +0.01）。完整记录在 `docs/changelog.json` 与 [GitHub Commits](https://github.com/aiyangdie/lan-share/commits/main)。规范见 `VERSIONING.md`。
+
+## [1.5.000] - 2026-07-02
+
+### Added
+- Electron 电脑端雏形（托盘、开机自启、React 设置窗）
+- `server/settings-store.mjs` + `GET/PUT /api/settings`（路径、端口）
+- 细粒度版本脚本 `bump-version.mjs`、官网「更新足迹」区块
+- `VERSIONING.md` Git 留痕规范
+
+### Includes (from 1.4.x)
+- 运营后台 `/admin`：广告、公告、APK/EXE 在线更新
+- 文件删除/清空、传输错误提示、共享自动保存
+
+## [1.4.0] - 2026-07-02
 
 ### Added
 - Single `VERSION` file as source of truth

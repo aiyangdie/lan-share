@@ -4,6 +4,15 @@ node_modules/
 # Build artifacts — archive/ is NEVER deleted
 releases/.stage-server/
 releases/.stage-exe/
+releases/.stage-portable/
+releases/*.apk
+releases/*.zip
+releases/*.exe
+releases/*.tar.gz
+!releases/manifest.json
+!releases/VERSION_HISTORY.md
+!releases/LATEST.txt
+!releases/README.md
 dist/
 
 # Local SDK
@@ -43,3 +52,9 @@ dist/
 # Env
 .env
 .env.*
+settings.json
+
+# Desktop
+desktop/node_modules/
+desktop/dist/
+releases/desktop/

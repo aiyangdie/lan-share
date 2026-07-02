@@ -1,0 +1,74 @@
+{
+  "name": "lanshare-desktop",
+  "version": "1.5.000",
+  "private": true,
+  "description": "LanShare desktop — tray, autostart, settings",
+  "main": "electron/main.mjs",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on http://127.0.0.1:5173 && electron .\"",
+    "build:ui": "vite build",
+    "start": "electron .",
+    "dist": "npm run build:ui && electron-builder --win portable"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "vite": "^6.0.3",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.lanshare.desktop",
+    "productName": "LanShare",
+    "directories": {
+      "output": "../releases/desktop"
+    },
+    "files": [
+      "electron/**/*",
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../server.mjs",
+        "to": "app/server.mjs"
+      },
+      {
+        "from": "../package.json",
+        "to": "app/package.json"
+      },
+      {
+        "from": "../server",
+        "to": "app/server"
+      },
+      {
+        "from": "../admin",
+        "to": "app/admin"
+      },
+      {
+        "from": "../scripts/discovery.mjs",
+        "to": "app/scripts/discovery.mjs"
+      },
+      {
+        "from": "../public",
+        "to": "app/public"
+      },
+      {
+        "from": "../node_modules",
+        "to": "app/node_modules"
+      }
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "artifactName": "LanShare-v${version}-desktop.exe"
+    }
+  }
+}
