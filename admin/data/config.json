@@ -8,16 +8,16 @@
     "level": "info"
   },
   "android": {
-    "version": "1.5.001",
-    "versionCode": 1005001,
-    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.001/lan-share-v1.5.001-android.apk",
+    "version": "1.5.002",
+    "versionCode": 1005002,
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.002/lan-share-v1.5.002-android.apk",
     "mandatory": false,
-    "changelog": "综合修复：IP/发现/传输/设置同步；v1.5.001 正式 APK"
+    "changelog": "系统设置：设备名/类型/路径；LocalSend 风格附近设备列表与彩色 UI"
   },
   "windows": {
-    "version": "1.5.001",
-    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.001/lan-share-v1.5.001-windows-portable.zip",
+    "version": "1.5.002",
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.002/lan-share-v1.5.002-windows-portable.zip",
     "mandatory": false,
-    "changelog": "综合修复 + Windows 便携版 v1.5.001（含 node.exe 与 LanShare.exe）"
+    "changelog": "系统设置 + LocalSend 风格设备互传 UI；v1.5.002 便携版"
   }
 }

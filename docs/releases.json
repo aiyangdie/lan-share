@@ -1,19 +1,25 @@
 {
   "latest": {
-    "version": "1.5.001",
-    "tag": "v1.5.001",
+    "version": "1.5.002",
+    "tag": "v1.5.002",
     "date": "2026-07-02",
-    "summary": "综合修复 + v1.5.001 正式安装包（APK / Windows 便携版）",
+    "summary": "系统设置与 LocalSend 风格设备互传 UI（APK / Windows 便携版）",
     "assets": {
-      "windows": "lan-share-v1.5.001-windows-portable.zip",
-      "android": "lan-share-v1.5.001-android.apk",
-      "androidLocal": "downloads/lan-share-v1.5.001-android.apk",
-      "serverWindows": "lan-share-v1.5.001-server-windows-x64.zip",
-      "serverLinux": "lan-share-v1.5.001-server-linux-x64.tar.gz",
-      "githubBase": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.001"
+      "windows": "lan-share-v1.5.002-windows-portable.zip",
+      "android": "lan-share-v1.5.002-android.apk",
+      "androidLocal": "downloads/lan-share-v1.5.002-android.apk",
+      "serverWindows": "lan-share-v1.5.002-server-windows-x64.zip",
+      "serverLinux": "lan-share-v1.5.002-server-linux-x64.tar.gz",
+      "githubBase": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.002"
     }
   },
   "history": [
+    {
+      "tag": "v1.5.002",
+      "version": "1.5.002",
+      "date": "2026-07-02",
+      "summary": "系统设置、设备名/类型、LocalSend 风格 UI"
+    },
     {
       "tag": "v1.5.001",
       "version": "1.5.001",
