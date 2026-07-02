@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#4F46E5" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="LanShare" />
   <title>LanShare</title>
@@ -41,13 +42,16 @@
 
         <div id="ad-setup" class="ad-slot hidden" aria-label="推荐"></div>
 
-        <div class="card">
+        <div class="card card-devices">
           <div class="discover-head">
-            <span>附近电脑</span>
-            <button class="btn ghost sm" id="btn-rescan" type="button">重新搜索</button>
+            <div>
+              <span class="discover-title">附近设备</span>
+              <span class="discover-subtitle">点选即可连接并传输，类似 LocalSend</span>
+            </div>
+            <button class="btn ghost sm" id="btn-rescan" type="button">搜索</button>
           </div>
           <div id="discover-list" class="discover-list">
-            <div class="discover-scanning">正在搜索附近电脑…</div>
+            <div class="discover-scanning">正在搜索附近设备…</div>
           </div>
         </div>
 
@@ -59,23 +63,11 @@
           <button class="btn primary full" id="btn-connect">连接</button>
         </div>
 
-        <div id="pc-settings" class="card settings-card hidden">
-          <p class="settings-title">电脑端设置</p>
-          <p class="settings-desc">配置保存路径与端口，修改后需重启服务</p>
-          <label class="field">
-            <span>手机上传目录</span>
-            <input id="pc-upload-dir" type="text" />
-          </label>
-          <label class="field">
-            <span>电脑共享目录</span>
-            <input id="pc-shared-dir" type="text" />
-          </label>
-          <label class="field">
-            <span>端口</span>
-            <input id="pc-port" type="number" min="1024" max="65535" />
-          </label>
-          <button class="btn primary full" id="btn-save-pc-settings" type="button">保存电脑设置</button>
+        <div class="card card-row-actions">
+          <button class="btn ghost full" id="btn-open-settings" type="button">⚙ 系统设置（路径 · 设备名 · 自动保存）</button>
         </div>
+
+        <div id="pc-settings" class="hidden"></div>
 
         <div class="card settings-card">
           <p class="settings-title">本地记录</p>
@@ -99,6 +91,84 @@
       </div>
     </section>
 
+    <!-- 系统设置 -->
+    <section id="screen-settings" class="screen hidden">
+      <header class="settings-topbar">
+        <button class="icon-btn" id="btn-settings-back" type="button" aria-label="返回">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h2>系统设置</h2>
+        <span class="settings-spacer"></span>
+      </header>
+      <div class="settings-scroll">
+        <div class="settings-section">
+          <h3>本机设备</h3>
+          <p class="settings-desc">给本机取个名字，方便其他设备识别</p>
+          <label class="field">
+            <span>设备名称</span>
+            <input id="set-device-name" type="text" placeholder="例如：小明的手机" maxlength="32" />
+          </label>
+          <label class="field">
+            <span>设备类型</span>
+            <select id="set-device-type" class="field-select">
+              <option value="phone">手机</option>
+              <option value="tablet">平板</option>
+              <option value="desktop">电脑</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="settings-section">
+          <h3>接收与传输</h3>
+          <p class="settings-desc">收到文件后自动保存，无需手动点下载</p>
+          <label class="check-row">
+            <span>自动保存收到的文件</span>
+            <input id="set-auto-save" type="checkbox" checked />
+          </label>
+          <label class="check-row">
+            <span>发现设备后快速连接</span>
+            <input id="set-quick-connect" type="checkbox" checked />
+          </label>
+          <p id="client-settings-hint" class="settings-hint">手机/平板：文件保存到系统「下载」文件夹</p>
+        </div>
+
+        <div id="server-settings-panel" class="settings-section hidden">
+          <h3>服务端路径 <span class="badge-type desktop">电脑</span></h3>
+          <p class="settings-desc">其他设备发来的文件 → 接收目录；共享给对方 → 共享目录</p>
+          <label class="field">
+            <span>接收目录（uploads）</span>
+            <input id="set-upload-dir" type="text" />
+          </label>
+          <label class="field">
+            <span>共享目录（shared）</span>
+            <input id="set-shared-dir" type="text" />
+          </label>
+          <label class="field">
+            <span>对外显示名称</span>
+            <input id="set-server-name" type="text" maxlength="32" />
+          </label>
+          <label class="field">
+            <span>对外设备类型</span>
+            <select id="set-server-type" class="field-select">
+              <option value="desktop">电脑</option>
+              <option value="phone">手机</option>
+              <option value="tablet">平板</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>服务端口</span>
+            <input id="set-port" type="number" min="1024" max="65535" />
+          </label>
+          <label class="check-row">
+            <span>自动整理接收的文件</span>
+            <input id="set-auto-save-server" type="checkbox" checked />
+          </label>
+        </div>
+
+        <button class="btn primary full" id="btn-save-settings" type="button">保存设置</button>
+      </div>
+    </section>
+
     <!-- 主界面 -->
     <section id="screen-main" class="screen hidden">
       <header class="header">
@@ -116,6 +186,8 @@
       <p class="ver-bar" id="ver-bar"></p>
 
       <div id="toast" class="toast hidden"></div>
+
+      <div id="connected-device" class="connected-device hidden"></div>
 
       <!-- 浏览 -->
       <div id="panel-browse" class="panel">
@@ -142,7 +214,7 @@
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4"/><path d="m8 8 4-4 4 4"/><path d="M4 20h16"/></svg>
           </div>
           <p class="upload-title">选择文件上传</p>
-          <p class="upload-desc">真实上传到电脑 uploads 文件夹 · 失败会显示具体原因</p>
+          <p class="upload-desc">选择文件后直传到已连接设备的接收目录 · 失败会显示具体原因</p>
           <input type="file" id="file-input" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip,.apk" hidden />
           <button class="btn primary" id="btn-pick">选择文件</button>
         </div>
@@ -169,6 +241,8 @@
   </div>
   <script src="config.js"></script>
   <script src="version.js"></script>
+  <script src="device.js"></script>
+  <script src="settings.js"></script>
   <script src="app.js"></script>
   <script src="ads.js"></script>
   <script src="update.js"></script>

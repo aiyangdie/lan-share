@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -16,10 +17,13 @@ const SETTINGS_FILE = () => process.env.SETTINGS_FILE || path.join(getDataBase()
 
 export function defaultSettings(dataBase = getDataBase()) {
   return {
-    version: 1,
+    version: 2,
     port: 8787,
+    deviceName: os.hostname(),
+    deviceType: 'desktop',
     uploadDir: path.join(dataBase, 'uploads'),
     sharedDir: path.join(dataBase, 'shared'),
+    autoSaveIncoming: true,
     openAtLogin: true,
     minimizeToTray: true,
     startMinimized: false,
@@ -28,14 +32,21 @@ export function defaultSettings(dataBase = getDataBase()) {
   }
 }
 
+function normalizeDeviceType(t) {
+  return ['desktop', 'phone', 'tablet'].includes(t) ? t : 'desktop'
+}
+
 function normalizeSettings(raw, dataBase) {
   const base = defaultSettings(dataBase)
   const merged = { ...base, ...raw }
   return {
-    version: 1,
+    version: 2,
     port: Math.min(65535, Math.max(1024, Number(merged.port) || 8787)),
+    deviceName: String(merged.deviceName || base.deviceName).slice(0, 32),
+    deviceType: normalizeDeviceType(merged.deviceType),
     uploadDir: String(merged.uploadDir || base.uploadDir),
     sharedDir: String(merged.sharedDir || base.sharedDir),
+    autoSaveIncoming: merged.autoSaveIncoming !== false,
     openAtLogin: merged.openAtLogin !== false,
     minimizeToTray: merged.minimizeToTray !== false,
     startMinimized: !!merged.startMinimized,
@@ -81,6 +92,14 @@ export function resolveLegacyDir(primary, legacyName, configured) {
     if (fs.existsSync(leg)) return leg
   }
   return configured || primaryPath
+}
+
+export function devicePayload(settings) {
+  const s = settings || readSettings()
+  return {
+    deviceName: s.deviceName,
+    deviceType: s.deviceType,
+  }
 }
 
 export { SETTINGS_FILE }

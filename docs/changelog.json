@@ -3,6 +3,16 @@
   "description": "LanShare 细粒度更新留痕。每条记录对应一次版本 +0.001 与一次 Git 提交。",
   "entries": [
     {
+      "version": "1.5.002",
+      "date": "2026-07-02",
+      "time": "2026-07-02T15:08:21.838Z",
+      "summary": "v1.6 系统设置：设备名/类型/路径/LocalSend风格UI",
+      "versionCode": 1005002,
+      "components": [
+        "core"
+      ]
+    },
+    {
       "version": "1.5.001",
       "date": "2026-07-02",
       "time": "2026-07-02T13:37:25.119Z",

@@ -42,6 +42,22 @@ export default function App() {
       </header>
 
       <section className="card">
+        <h2>本机设备</h2>
+        <label className="field">
+          <span>设备名称（附近设备列表显示）</span>
+          <input value={form.deviceName || ''} onChange={(e) => set('deviceName', e.target.value)} placeholder="例如：客厅电脑" />
+        </label>
+        <label className="field">
+          <span>设备类型</span>
+          <select value={form.deviceType || 'desktop'} onChange={(e) => set('deviceType', e.target.value)}>
+            <option value="desktop">电脑</option>
+            <option value="phone">手机</option>
+            <option value="tablet">平板</option>
+          </select>
+        </label>
+      </section>
+
+      <section className="card">
         <h2>文件夹路径</h2>
         <label className="field">
           <span>手机上传保存到（uploads）</span>

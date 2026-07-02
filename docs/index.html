@@ -197,8 +197,8 @@
       <p class="subtitle">手机和电脑在<strong>同一 WiFi</strong> 下互传文件。数据不出局域网，无需云盘、无需注册账号。</p>
       <div class="badges">
         <span class="badge ok">MIT 开源</span>
-        <span class="badge">v1.2 自动发现</span>
-        <span class="badge">Windows / Android / iPhone</span>
+        <span class="badge">v1.6 系统设置 · LocalSend 风格</span>
+        <span class="badge">Windows / Android / iPhone / 平板</span>
         <span class="badge">Node.js ≥ 18</span>
       </div>
     </header>
@@ -277,7 +277,7 @@
         <span class="flow-arrow">→</span>
         <div class="flow-node">GET /api/health</div>
         <span class="flow-arrow">→</span>
-        <div class="flow-node">显示附近电脑</div>
+        <div class="flow-node">显示附近设备</div>
       </div>
       <p class="section-desc" style="margin-top:0">备用策略：服务端 <code>/api/discover/scan</code> 或客户端扫描 <code>192.168.x.1~254</code>（批量探测，超时 900ms）。</p>
     </section>
@@ -289,13 +289,38 @@
 
       <div class="grid2" style="margin-bottom:20px">
         <div class="card">
+          <h3>是原生还是 Web？</h3>
+          <p style="margin:8px 0 0;color:var(--muted);font-size:.88rem;line-height:1.65">
+            LanShare 采用<strong>混合架构</strong>（不是纯原生 App，也不是纯网页）：
+          </p>
+          <ul style="margin:8px 0 0;padding-left:1.1rem;color:var(--muted);font-size:.88rem;line-height:1.65">
+            <li><strong>服务端（电脑）</strong>：Node.js 单文件服务，Electron 托盘 + React 设置窗（v1.5+）</li>
+            <li><strong>客户端 UI</strong>：一套 HTML/CSS/JS（<code>mobile-app/</code>），浏览器 / PWA / APK 内 WebView 共用</li>
+            <li><strong>Android 原生部分</strong>：仅 UDP 发现、系统下载器桥接（<code>DiscoveryBridge.java</code>）</li>
+            <li><strong>Windows 启动器</strong>：C# 小 exe + 内嵌 Node 便携包，双击即用</li>
+          </ul>
+          <p style="margin:10px 0 0;color:var(--dim);font-size:.82rem">与 LocalSend 的纯 Dart/Flutter 不同，我们优先「轻量 + 一套 UI 多端同步 + 易改易部署」。</p>
+        </div>
+        <div class="card">
+          <h3>v1.6 系统设置（类 LocalSend）</h3>
+          <ul style="margin:8px 0 0;padding-left:1.1rem;color:var(--muted);font-size:.88rem;line-height:1.65">
+            <li>设备自定义名称 · 电脑/手机/平板彩色图标区分</li>
+            <li>接收目录 / 共享目录（电脑端可配置路径）</li>
+            <li>自动保存收到的文件 · 点选附近设备即连即传</li>
+            <li>手机/平板/浏览器：客户端设置存本地；电脑：服务端 <code>/api/settings</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:20px">
+        <div class="card">
           <h3>技术栈</h3>
           <ul style="margin:8px 0 0;padding-left:1.1rem;color:var(--muted);font-size:.88rem">
             <li>服务端：Node.js ≥ 18 · ES Module · <code>server.mjs</code></li>
             <li>上传解析：Busboy（multipart）</li>
             <li>客户端：原生 HTML/CSS/JS（<code>mobile-app/</code>）</li>
             <li>Android：WebView + Java 桥接（<code>DiscoveryBridge</code>）</li>
-            <li>Windows：C# 启动器 + 内嵌 Node 便携包</li>
+            <li>Windows：C# 启动器 + 内嵌 Node · Electron 设置（开发中）</li>
           </ul>
         </div>
         <div class="card">
@@ -315,8 +340,9 @@
         <table>
           <thead><tr><th>方法</th><th>路径</th><th>说明</th></tr></thead>
           <tbody>
-            <tr><td><code>GET</code></td><td><code>/api/health</code></td><td>健康检查，返回版本、IP、端口</td></tr>
-            <tr><td><code>GET</code></td><td><code>/api/discover/peers</code></td><td>UDP 被动发现的附近电脑列表</td></tr>
+            <tr><td><code>GET</code></td><td><code>/api/health</code></td><td>健康检查，返回版本、IP、设备名与类型</td></tr>
+            <tr><td><code>GET/PUT</code></td><td><code>/api/settings</code></td><td>系统设置：路径、端口、设备名、自动保存</td></tr>
+            <tr><td><code>GET</code></td><td><code>/api/discover/peers</code></td><td>UDP 被动发现的附近设备列表</td></tr>
             <tr><td><code>GET</code></td><td><code>/api/discover/scan</code></td><td>主动扫描当前 /24 子网</td></tr>
             <tr><td><code>GET</code></td><td><code>/api/roots</code></td><td>根目录：<code>uploads</code> / <code>shared</code></td></tr>
             <tr><td><code>GET</code></td><td><code>/api/browse/{root}/{path}</code></td><td>浏览文件夹</td></tr>
@@ -332,7 +358,7 @@
           <thead><tr><th>平台</th><th>角色</th><th>使用方式</th></tr></thead>
           <tbody>
             <tr><td>Windows</td><td>服务端 + 可选 UI</td><td>解压 zip → <code>LanShare.exe</code> 或 <code>npm start</code></td></tr>
-            <tr><td>Android</td><td>客户端</td><td>安装 APK，点「附近电脑」连接</td></tr>
+            <tr><td>Android</td><td>客户端（WebView 壳）</td><td>安装 APK → 附近设备 → 系统设置</td></tr>
             <tr><td>iPhone / iPad</td><td>客户端 (PWA)</td><td>Safari 打开 <code>http://电脑IP:8787</code> → 添加到主屏幕</td></tr>
             <tr><td>macOS / Linux</td><td>服务端</td><td><code>node server.mjs</code>（Release 提供 zip/tar）</td></tr>
           </tbody>

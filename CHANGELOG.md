@@ -4,6 +4,8 @@ All notable changes are documented here. **Old release packages are kept in `rel
 
 ## 细粒度更新留痕
 
+- **1.5.002** (2026-07-02) — v1.6 系统设置：设备名/类型/路径/LocalSend风格UI
+
 - **1.5.001** (2026-07-02) — 综合修复：IP/设置/发现/传输/同步/Electron重启/admin版本号
 
 > 每次代码修改版本 **+0.001**（改 10 次 +0.01）。完整记录在 `docs/changelog.json` 与 [GitHub Commits](https://github.com/aiyangdie/lan-share/commits/main)。规范见 `VERSIONING.md`。

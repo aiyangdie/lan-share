@@ -2,7 +2,7 @@
   "name": "LanShare",
   "short_name": "LanShare",
   "description": "手机和电脑在同一 WiFi 下互传文件",
-  "version": "1.5.001",
+  "version": "1.5.002",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

@@ -8,7 +8,7 @@ import os from 'node:os'
 export const DISCOVERY_PORT = 38787
 export const MAGIC = 'lanshare'
 
-export function startDiscovery({ port, version, getIp }) {
+export function startDiscovery({ port, version, getIp, getDeviceMeta = () => ({}) }) {
   const peers = new Map()
   const socket = dgram.createSocket({ type: 'udp4', reuseAddr: true })
 
@@ -28,12 +28,15 @@ export function startDiscovery({ port, version, getIp }) {
     try { socket.setBroadcast(true) } catch { /* ignore */ }
     const tick = () => {
       const ip = getIp()
+      const meta = getDeviceMeta() || {}
       const payload = Buffer.from(JSON.stringify({
         type: MAGIC,
         version,
         port,
         ip,
         hostname: os.hostname(),
+        deviceName: meta.deviceName || os.hostname(),
+        deviceType: meta.deviceType || 'desktop',
       }))
       try { socket.send(payload, 0, payload.length, DISCOVERY_PORT, '255.255.255.255') } catch { /* ignore */ }
       const parts = ip.split('.')
@@ -69,6 +72,8 @@ export function probeHealth(ip, port = 8787, timeoutMs = 900) {
               port: j.port || port,
               version: j.version,
               hostname: j.hostname || ip,
+              deviceName: j.deviceName || j.hostname || ip,
+              deviceType: j.deviceType || 'desktop',
             })
           } else resolve(null)
         } catch { resolve(null) }

@@ -1,0 +1,6 @@
+LanShare v1.5.002 — iPhone / iPad (PWA)
+==========================================
+
+1. Start LanShare on PC (run .exe or start-server script)
+2. Same WiFi → Safari open http://YOUR_PC_IP:8787
+3. Share → Add to Home Screen

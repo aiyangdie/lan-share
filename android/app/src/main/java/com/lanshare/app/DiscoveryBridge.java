@@ -204,6 +204,8 @@ public class DiscoveryBridge {
             out.put("port", j.optInt("port", HTTP_PORT));
             out.put("version", j.optString("version"));
             out.put("hostname", j.optString("hostname", ip));
+            out.put("deviceName", j.optString("deviceName", j.optString("hostname", ip)));
+            out.put("deviceType", j.optString("deviceType", "desktop"));
             out.put("seenAt", System.currentTimeMillis());
             return out;
         } catch (Exception e) {

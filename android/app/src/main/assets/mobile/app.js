@@ -16,6 +16,7 @@ let server = localStorage.getItem(STORAGE_KEY) || ''
 let root = 'uploads'
 let subPath = '/'
 let connected = false
+let connectedPeer = null
 let loading = false
 let seenShared = new Set()
 
@@ -121,6 +122,8 @@ function clearLocalRecords() {
   seenShared = new Set()
   server = ''
   connected = false
+  connectedPeer = null
+  renderConnectedDevice(null)
   root = 'uploads'
   subPath = '/'
   $('#upload-queue').innerHTML = ''
@@ -150,7 +153,14 @@ async function probeServer(ip, port = DEFAULT_HTTP_PORT) {
     if (!res.ok) return null
     const j = await res.json()
     if (j.ok && j.name === 'lan-share') {
-      return { ip: j.ip || ip, port: j.port || port, version: j.version, hostname: j.hostname || ip }
+      return {
+        ip: j.ip || ip,
+        port: j.port || port,
+        version: j.version,
+        hostname: j.hostname || ip,
+        deviceName: j.deviceName || j.hostname || ip,
+        deviceType: j.deviceType || 'desktop',
+      }
     }
     return null
   } catch {
@@ -177,33 +187,64 @@ async function scanSubnetClient(base) {
 
 function renderDiscoverList(peers) {
   const list = $('#discover-list')
+  const D = window.LanShareDevice
   if (!peers.length) {
-    list.innerHTML = '<div class="discover-empty">未发现电脑，请确认电脑已启动 LanShare</div>'
+    list.innerHTML = '<div class="discover-empty">未发现设备，请确认对方已打开 LanShare 且在同一 WiFi</div>'
     $('#setup-help').classList.remove('hidden')
     return
   }
   $('#setup-help').classList.add('hidden')
   list.innerHTML = ''
   for (const peer of peers) {
+    const type = D.peerDeviceType(peer)
+    const meta = D.deviceMeta(type)
+    const name = D.deviceDisplayName(peer)
     const btn = document.createElement('button')
     btn.type = 'button'
-    btn.className = 'discover-item'
-    const host = peer.hostname || peer.ip
+    btn.className = `discover-item type-${type}`
     btn.innerHTML = `
-      <div class="discover-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
-      </div>
+      <div class="discover-icon type-${type}">${meta.icon}</div>
       <div class="discover-meta">
-        <div class="discover-name">${escapeHtml(host)}</div>
-        <div class="discover-sub">${escapeHtml(peer.ip)}:${peer.port || DEFAULT_HTTP_PORT}${peer.version ? ` · v${escapeHtml(peer.version)}` : ''}</div>
+        <div class="discover-name">${escapeHtml(name)}</div>
+        <div class="discover-sub">
+          <span class="device-badge ${type}">${meta.label}</span>
+          <span>${escapeHtml(peer.ip)}:${peer.port || DEFAULT_HTTP_PORT}</span>
+          ${peer.version ? `<span>v${escapeHtml(peer.version)}</span>` : ''}
+        </div>
       </div>
+      <span class="discover-action">连接</span>
     `
     btn.onclick = async () => {
       $('#input-server').value = `${peer.ip}:${peer.port || DEFAULT_HTTP_PORT}`
-      await connectFromSetup()
+      const quick = window.LanShareSettings?.readClientSettings?.()?.quickConnect !== false
+      if (quick) await connectFromSetup()
     }
     list.appendChild(btn)
   }
+}
+
+function renderConnectedDevice(info) {
+  const el = $('#connected-device')
+  if (!el) return
+  if (!connected || !info) {
+    el.classList.add('hidden')
+    el.innerHTML = ''
+    return
+  }
+  const D = window.LanShareDevice
+  const type = D.peerDeviceType(info)
+  const meta = D.deviceMeta(type)
+  const name = D.deviceDisplayName(info)
+  el.classList.remove('hidden')
+  el.innerHTML = `
+    <div class="discover-icon type-${type}">${meta.icon}</div>
+    <div class="connected-device-meta">
+      <strong>${escapeHtml(name)}</strong>
+      <span>${meta.label} · ${escapeHtml(info.ip)}:${info.port || DEFAULT_HTTP_PORT} · 已连接，发送即达</span>
+    </div>
+    <button type="button" class="btn-link" id="btn-switch-device">换设备</button>
+  `
+  $('#btn-switch-device')?.addEventListener('click', () => { vibrate(); showSetup() })
 }
 
 let discovering = false
@@ -220,7 +261,7 @@ async function discoverServers() {
   if (discovering) return
   discovering = true
   const list = $('#discover-list')
-  list.innerHTML = '<div class="discover-scanning">正在搜索附近电脑…</div>'
+  list.innerHTML = '<div class="discover-scanning">正在搜索附近设备…</div>'
   $('#setup-help').classList.add('hidden')
   try {
     if (window.LanShareNative?.getDiscoveredPeers) {
@@ -314,10 +355,15 @@ async function ping() {
 async function connect(url) {
   server = pageServerOrigin() || normalizeServer(url)
   const info = await ping()
+  connectedPeer = info
   localStorage.setItem(STORAGE_KEY, server)
   connected = true
-  const label = pageServerOrigin() ? `本机 · ${info.ip}:${info.port}` : `${info.ip}:${info.port}`
+  const D = window.LanShareDevice
+  const label = pageServerOrigin()
+    ? `本机 · ${D.deviceDisplayName(info)}`
+    : `${D.deviceDisplayName(info)} · ${info.ip}:${info.port}`
   setStatus(true, label)
+  renderConnectedDevice(info)
   showMain()
   root = 'uploads'
   subPath = '/'
@@ -332,47 +378,15 @@ async function connect(url) {
 function showSetup() {
   $('#screen-setup').classList.remove('hidden')
   $('#screen-main').classList.add('hidden')
+  $('#screen-settings')?.classList.add('hidden')
   const saved = server.replace(/^https?:\/\//, '')
   $('#input-server').value = saved || defaultServerHost()
-  $('#pc-settings')?.classList.toggle('hidden', !pageServerOrigin())
-  if (pageServerOrigin()) loadPcSettings()
   discoverServers()
-}
-
-async function loadPcSettings() {
-  try {
-    const res = await fetch(api('/api/settings'))
-    const data = await res.json()
-    if (!res.ok) return
-    const s = data.settings
-    $('#pc-upload-dir').value = s.uploadDir || ''
-    $('#pc-shared-dir').value = s.sharedDir || ''
-    $('#pc-port').value = s.port || DEFAULT_HTTP_PORT
-  } catch { /* ignore */ }
-}
-
-async function savePcSettings() {
-  try {
-    const body = {
-      uploadDir: $('#pc-upload-dir').value.trim(),
-      sharedDir: $('#pc-shared-dir').value.trim(),
-      port: Number($('#pc-port').value),
-    }
-    const res = await fetch(api('/api/settings'), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error || '保存失败')
-    toast(data.restartRequired ? '已保存，请重启 LanShare 服务' : '电脑设置已保存')
-  } catch (e) {
-    toastErr(e.message || '保存失败')
-  }
 }
 
 function showMain() {
   $('#screen-setup').classList.add('hidden')
+  $('#screen-settings')?.classList.add('hidden')
   $('#screen-main').classList.remove('hidden')
 }
 
@@ -715,6 +729,8 @@ async function collectSharedFiles(rel = '') {
 
 async function pollSharedIncoming() {
   if (!connected || !getApiBase()) return
+  const autoSave = window.LanShareSettings?.readClientSettings?.()?.autoSaveIncoming !== false
+  if (!autoSave) return
   try {
     const items = await collectSharedFiles()
     for (const it of items) {
@@ -752,9 +768,22 @@ $('#btn-clear-local').onclick = () => {
   vibrate()
   if (confirmAction('清除本地记录？\n将断开连接并清除保存的电脑地址与自动下载记忆。')) clearLocalRecords()
 }
-$('#btn-save-pc-settings').onclick = () => { vibrate(); savePcSettings() }
 
-$('#btn-settings').onclick = showSetup
+$('#btn-open-settings')?.addEventListener('click', () => { vibrate(); window.LanShareSettings?.showSettingsScreen?.() })
+$('#btn-settings-back')?.addEventListener('click', () => { vibrate(); window.LanShareSettings?.hideSettingsScreen?.() })
+$('#btn-save-settings')?.addEventListener('click', async () => {
+  vibrate()
+  try {
+    const data = await window.LanShareSettings.saveAllSettings()
+    toast(data.restartRequired ? '已保存，请重启服务使端口/路径生效' : '设置已保存')
+    window.LanShareSettings.hideSettingsScreen()
+    if (connected && connectedPeer) renderConnectedDevice(connectedPeer)
+  } catch (e) {
+    toastErr(e.message || '保存失败')
+  }
+})
+
+$('#btn-settings').onclick = () => { vibrate(); window.LanShareSettings?.showSettingsScreen?.() }
 
 $('#btn-back').onclick = () => {
   if (subPath === '/') return

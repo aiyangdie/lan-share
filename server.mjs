@@ -11,7 +11,7 @@ import Busboy from 'busboy'
 import { startDiscovery, scanSubnet } from './scripts/discovery.mjs'
 import { handleAdminRequest } from './admin/routes.mjs'
 import { checkWindowsUpdate } from './admin/config-store.mjs'
-import { readSettings, writeSettings, getDataBase, resolveLegacyDir } from './server/settings-store.mjs'
+import { readSettings, writeSettings, getDataBase, resolveLegacyDir, devicePayload } from './server/settings-store.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -255,6 +255,7 @@ const server = http.createServer(async (req, res) => {
     if (await handleAdminRequest(req, res, url)) return
 
     if (req.method === 'GET' && url.pathname === '/api/health') {
+      const s = readSettings()
       return json(res, 200, {
         ok: true,
         name: 'lan-share',
@@ -262,6 +263,8 @@ const server = http.createServer(async (req, res) => {
         ip: getLanIpSync(),
         port: PORT,
         hostname: os.hostname(),
+        deviceName: s.deviceName,
+        deviceType: s.deviceType,
         time: Date.now(),
       })
     }
@@ -272,8 +275,11 @@ const server = http.createServer(async (req, res) => {
         ok: true,
         settings: {
           port: s.port,
+          deviceName: s.deviceName,
+          deviceType: s.deviceType,
           uploadDir: s.uploadDir,
           sharedDir: s.sharedDir,
+          autoSaveIncoming: s.autoSaveIncoming,
           openAtLogin: s.openAtLogin,
           minimizeToTray: s.minimizeToTray,
           startMinimized: s.startMinimized,
@@ -285,27 +291,46 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'PUT' && url.pathname === '/api/settings') {
       try {
         const body = await readJsonBody(req)
+        const prev = readSettings()
         const next = writeSettings(body)
         return json(res, 200, {
           ok: true,
-          settings: next,
+          settings: {
+            port: next.port,
+            deviceName: next.deviceName,
+            deviceType: next.deviceType,
+            uploadDir: next.uploadDir,
+            sharedDir: next.sharedDir,
+            autoSaveIncoming: next.autoSaveIncoming,
+            openAtLogin: next.openAtLogin,
+            minimizeToTray: next.minimizeToTray,
+            startMinimized: next.startMinimized,
+            autoOpenBrowser: next.autoOpenBrowser,
+          },
           restartRequired: next.port !== PORT
-            || next.uploadDir !== runtimeSettings.uploadDir
-            || next.sharedDir !== runtimeSettings.sharedDir,
+            || next.uploadDir !== prev.uploadDir
+            || next.sharedDir !== prev.sharedDir,
         })
       } catch (e) {
         return json(res, 400, { error: e.message })
       }
     }
 
-    if (req.method === 'GET' && url.pathname === '/api/discover/peers') {
-      const self = {
+    function peerView(extra = {}) {
+      const s = readSettings()
+      return {
         ip: getLanIpSync(),
         port: PORT,
         version: VERSION,
         hostname: os.hostname(),
-        self: true,
+        deviceName: s.deviceName,
+        deviceType: s.deviceType,
+        ...extra,
       }
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/discover/peers') {
+      const self = peerView({ self: true })
       const peers = discovery.getPeers().filter((p) => p.ip !== self.ip)
       return json(res, 200, { ok: true, self, peers })
     }
@@ -313,7 +338,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/discover/scan') {
       const ip = getLanIpSync()
       const scanned = await scanSubnet(ip, PORT)
-      const self = { ip, port: PORT, version: VERSION, hostname: os.hostname(), self: true }
+      const self = peerView({ self: true })
       const peers = scanned.filter((p) => p.ip !== ip)
       return json(res, 200, { ok: true, self, peers, scanned: peers.length + 1 })
     }
@@ -472,7 +497,12 @@ const server = http.createServer(async (req, res) => {
   }
 })
 
-const discovery = startDiscovery({ port: PORT, version: VERSION, getIp: getLanIpSync })
+const discovery = startDiscovery({
+  port: PORT,
+  version: VERSION,
+  getIp: getLanIpSync,
+  getDeviceMeta: () => devicePayload(readSettings()),
+})
 
 server.listen(PORT, HOST, () => {
   const ip = getLanIpSync()
