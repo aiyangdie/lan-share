@@ -119,15 +119,16 @@ function collectAssets() {
 function ensureTag() {
   const git = process.env.GIT_EXE || 'C:\\Users\\aike1\\Documents\\_dev_tools\\PortableGit\\bin\\git.exe'
   const safe = `-c safe.directory=${ROOT.replace(/\\/g, '/')}`
+  const author = `-c user.name=${process.env.GIT_AUTHOR_NAME || 'aiyangdie'} -c user.email=${process.env.GIT_AUTHOR_EMAIL || 'aike1015@qq.com'}`
   try {
-    execSync(`"${git}" ${safe} -C "${ROOT}" rev-parse ${TAG}`, { stdio: 'pipe' })
+    execSync(`"${git}" ${safe} ${author} -C "${ROOT}" rev-parse ${TAG}`, { stdio: 'pipe' })
     console.log(`Tag ${TAG} 已存在`)
   } catch {
-    execSync(`"${git}" ${safe} -C "${ROOT}" tag -a ${TAG} -m "LanShare ${TAG}"`, { stdio: 'inherit' })
+    execSync(`"${git}" ${safe} ${author} -C "${ROOT}" tag -a ${TAG} -m "LanShare ${TAG}"`, { stdio: 'inherit' })
     console.log(`Created tag ${TAG}`)
   }
   try {
-    execSync(`"${git}" ${safe} -C "${ROOT}" push origin ${TAG}`, { stdio: 'pipe' })
+    execSync(`"${git}" ${safe} ${author} -C "${ROOT}" push origin ${TAG}`, { stdio: 'pipe' })
   } catch {
     console.log(`Tag ${TAG} 已在远程`)
   }
