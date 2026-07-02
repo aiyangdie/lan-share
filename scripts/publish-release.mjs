@@ -135,19 +135,21 @@ function ensureTag() {
 
 const bodyText = `## LanShare ${TAG}
 
-### 更新内容
-- 综合修复：IP/发现/传输/设置同步/Electron 重启
-- 运营后台、广告、在线更新、系统公告
-- Electron 电脑端设置、细粒度版本留痕
+### 更新内容（v1.5.004）
+- **主界面本机 ↔ 对方关系条**：传文件时一眼看出「我是手机/平板/电脑」和「对方是谁」
+- **切换对方**：手机/平板可换连另一台电脑；电脑端可刷新查看连入的设备
+- **电脑可见连入手机**：手机 App 连接后，电脑浏览器「对方」卡片显示手机型号与类型
+- 设备品牌识别、LocalSend 风格 UI（延续 v1.5.003）
 
 ### 下载
 | 平台 | 文件 |
 |------|------|
-| Windows | \`lan-share-v${version}-windows-portable.zip\` 解压后双击 LanShare.exe |
-| Android | \`lan-share-v${version}-android.apk\` |
-| 服务端 Windows | \`lan-share-v${version}-server-windows-x64.zip\` |
-| 服务端 Linux | \`lan-share-v${version}-server-linux-x64.tar.gz\` |
-| iPhone/iPad | 见 \`ios-pwa.txt\` |
+| Windows 电脑 | \`lan-share-v${version}-windows-portable.zip\` 解压后双击 **LanShare.exe** |
+| Android 手机 | \`lan-share-v${version}-android-phone.apk\` |
+| Android 平板 | \`lan-share-v${version}-android-tablet.apk\` |
+| Linux | \`lan-share-v${version}-linux-x64.tar.gz\` |
+| macOS | \`lan-share-v${version}-macos-x64.tar.gz\` |
+| iPhone / iPad | 见 \`ios-iphone.txt\` / \`ios-ipad.txt\`（Safari 添加到主屏幕） |
 
 官网：https://aiyangdie.github.io/lan-share/
 `

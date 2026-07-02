@@ -1,25 +1,31 @@
 {
   "latest": {
-    "version": "1.5.003",
-    "tag": "v1.5.003",
+    "version": "1.5.004",
+    "tag": "v1.5.004",
     "date": "2026-07-02",
-    "summary": "设备品牌识别、类型自动匹配、全平台安装包",
+    "summary": "主界面本机↔对方关系条，可切换对端，全平台安装包",
     "assets": {
-      "windows": "lan-share-v1.5.003-windows-portable.zip",
-      "windowsAlt": "lan-share-v1.5.003-windows.zip",
-      "android": "lan-share-v1.5.003-android.apk",
-      "androidPhone": "lan-share-v1.5.003-android-phone.apk",
-      "androidTablet": "lan-share-v1.5.003-android-tablet.apk",
-      "androidLocal": "downloads/lan-share-v1.5.003-android.apk",
-      "serverWindows": "lan-share-v1.5.003-server-windows-x64.zip",
-      "linux": "lan-share-v1.5.003-linux-x64.tar.gz",
-      "macos": "lan-share-v1.5.003-macos-x64.tar.gz",
-      "iosIphone": "lan-share-v1.5.003-ios-iphone.txt",
-      "iosIpad": "lan-share-v1.5.003-ios-ipad.txt",
-      "githubBase": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.003"
+      "windows": "lan-share-v1.5.004-windows-portable.zip",
+      "windowsAlt": "lan-share-v1.5.004-windows.zip",
+      "android": "lan-share-v1.5.004-android.apk",
+      "androidPhone": "lan-share-v1.5.004-android-phone.apk",
+      "androidTablet": "lan-share-v1.5.004-android-tablet.apk",
+      "androidLocal": "downloads/lan-share-v1.5.004-android.apk",
+      "serverWindows": "lan-share-v1.5.004-server-windows-x64.zip",
+      "linux": "lan-share-v1.5.004-linux-x64.tar.gz",
+      "macos": "lan-share-v1.5.004-macos-x64.tar.gz",
+      "iosIphone": "lan-share-v1.5.004-ios-iphone.txt",
+      "iosIpad": "lan-share-v1.5.004-ios-ipad.txt",
+      "githubBase": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.004"
     }
   },
   "history": [
+    {
+      "tag": "v1.5.004",
+      "version": "1.5.004",
+      "date": "2026-07-02",
+      "summary": "本机↔对方关系条、切换对端、电脑可见连入手机"
+    },
     {
       "tag": "v1.5.003",
       "version": "1.5.003",
