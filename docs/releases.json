@@ -1,0 +1,28 @@
+{
+  "latest": {
+    "version": "1.2.0",
+    "tag": "v1.2.0",
+    "date": "2026-07-02",
+    "summary": "自动发现附近电脑 · 连接失败指引 · Windows 一键启动",
+    "assets": {
+      "windows": "lan-share-v1.2.0-windows-portable.zip",
+      "android": "lan-share-v1.2.0-android.apk",
+      "androidLocal": "downloads/lan-share-v1.2.0-android.apk"
+    }
+  },
+  "history": [
+    {
+      "tag": "v1.1.0",
+      "version": "1.1.0",
+      "date": "2026-06-25",
+      "summary": "Windows 便携 exe、版本统一"
+    },
+    {
+      "tag": "v1.0.0",
+      "version": "1.0.0",
+      "date": "2026-06-25",
+      "summary": "开源首版、PWA、多平台 zip"
+    }
+  ],
+  "repo": "aiyangdie/lan-share"
+}
