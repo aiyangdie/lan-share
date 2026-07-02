@@ -1,0 +1,9 @@
+LanShare v1.1.0
+Built: 2026-06-25T07:28:26.454Z
+Artifacts:
+  - lan-share-v1.1.0-android.apk
+  - lan-share-v1.1.0-windows-x64.exe
+  - lan-share-v1.1.0-server-windows-x64.zip
+  - lan-share-v1.1.0-server-linux-x64.tar.gz
+  - lan-share-v1.1.0-server-macos.zip
+  - lan-share-v1.1.0-ios-pwa.txt

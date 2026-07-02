@@ -13,7 +13,10 @@ function adsApiBase() {
     const base = getApiBase()
     if (base) return base
   }
-  if (window.location.port === '8787') return window.location.origin
+  if (typeof pageServerOrigin === 'function') {
+    const origin = pageServerOrigin()
+    if (origin) return origin
+  }
   return ''
 }
 

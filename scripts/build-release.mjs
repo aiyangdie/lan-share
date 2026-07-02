@@ -54,18 +54,37 @@ console.log(`\n=== LanShare Release v${version} ===\n`)
 run('node scripts/sync-version.mjs')
 run('node scripts/generate-icons.mjs')
 run('node scripts/sync-mobile.mjs')
-run('npm install --omit=dev')
+if (!fs.existsSync(path.join(ROOT, 'node_modules/busboy'))) {
+  try {
+    run('npm install --omit=dev')
+  } catch {
+    console.warn('⚠ npm install skipped (node_modules present or npm unavailable)')
+  }
+}
 
 // 1. Android APK
 const assetsDir = path.join(ROOT, 'android/app/src/main/assets/mobile')
 ensureDir(assetsDir)
 copyDir(path.join(ROOT, 'mobile-app'), assetsDir)
 
-const gradle = path.join(ROOT, 'tools/gradle-6.7.1/bin/gradle.bat')
+const gradle = path.join(ROOT, 'tools/gradle-7.6.4/bin/gradle.bat')
 const apkSrc = path.join(ROOT, 'android/app/build/outputs/apk/debug/app-debug.apk')
+const javaHome = process.env.JAVA_HOME || 'C:\\Users\\aike1\\Documents\\_dev_tools\\jdk-17'
+const sdkRoot = path.join(ROOT, 'tools/android-sdk')
+const localProps = path.join(ROOT, 'android/local.properties')
+writeFile(localProps, `sdk.dir=${sdkRoot.replace(/\\/g, '\\\\')}\n`)
+
 if (fs.existsSync(gradle)) {
   try {
-    run(`"${gradle}" assembleDebug --no-daemon -q`, { cwd: path.join(ROOT, 'android') })
+    run(`"${gradle}" assembleDebug --no-daemon -q`, {
+      cwd: path.join(ROOT, 'android'),
+      env: {
+        ...process.env,
+        JAVA_HOME: javaHome,
+        ANDROID_HOME: sdkRoot,
+        ANDROID_SDK_ROOT: sdkRoot,
+      },
+    })
   } catch {
     console.warn('⚠ APK build failed — using existing apk if any')
   }

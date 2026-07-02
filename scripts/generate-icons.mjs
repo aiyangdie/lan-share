@@ -8,7 +8,10 @@ import { fileURLToPath } from 'node:url'
 import zlib from 'node:zlib'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const outDir = path.join(__dirname, '../public/icons')
+const outDirs = [
+  path.join(__dirname, '../public/icons'),
+  path.join(__dirname, '../mobile-app/icons'),
+]
 
 function crc32(buf) {
   let c = 0xffffffff
@@ -64,8 +67,10 @@ function pngSolid(size, rgb = [79, 70, 229]) {
   ])
 }
 
-fs.mkdirSync(outDir, { recursive: true })
-for (const size of [192, 512]) {
-  fs.writeFileSync(path.join(outDir, `icon-${size}.png`), pngSolid(size))
-  console.log(`wrote icon-${size}.png`)
+for (const outDir of outDirs) {
+  fs.mkdirSync(outDir, { recursive: true })
+  for (const size of [192, 512]) {
+    fs.writeFileSync(path.join(outDir, `icon-${size}.png`), pngSolid(size))
+    console.log(`wrote ${path.relative(path.join(__dirname, '..'), path.join(outDir, `icon-${size}.png`))}`)
+  }
 }

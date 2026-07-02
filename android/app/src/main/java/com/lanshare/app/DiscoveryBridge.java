@@ -179,6 +179,7 @@ public class DiscoveryBridge {
                 synchronized (peers) {
                     peers.put(ip, peer);
                 }
+                notifyPeer(peer);
             }
         }
     }

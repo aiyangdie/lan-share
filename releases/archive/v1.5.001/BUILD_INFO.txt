@@ -1,0 +1,9 @@
+LanShare v1.5.001
+Built: 2026-07-02T13:57:00.958Z
+Artifacts:
+  - lan-share-v1.5.001-android.apk
+  - lan-share-v1.5.001-windows-portable.zip
+  - lan-share-v1.5.001-server-windows-x64.zip
+  - lan-share-v1.5.001-server-linux-x64.tar.gz
+  - lan-share-v1.5.001-server-macos.zip
+  - lan-share-v1.5.001-ios-pwa.txt

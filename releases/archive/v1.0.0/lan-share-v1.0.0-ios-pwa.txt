@@ -1,0 +1,13 @@
+LanShare for iPhone / iPad (PWA)
+================================
+
+Apple does not allow sideloading APK/IPA without a developer account.
+Use the Progressive Web App instead — it works like a native app:
+
+1. Start LanShare server on your PC (see server package)
+2. Connect iPhone to the SAME WiFi
+3. Open Safari, go to http://YOUR_PC_IP:8787
+4. Tap Share → "Add to Home Screen"
+5. Launch LanShare from your home screen
+
+No App Store needed. Works offline for UI; transfers need WiFi.

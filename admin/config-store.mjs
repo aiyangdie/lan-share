@@ -1,12 +1,33 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { parseVersion, formatVersion, versionCode as calcVersionCode } from '../scripts/parse-version.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = path.join(__dirname, 'data')
 const CONFIG_FILE = path.join(DATA_DIR, 'config.json')
 
+function readProjectVersion() {
+  try {
+    const raw = fs.readFileSync(path.join(__dirname, '..', 'VERSION'), 'utf8').trim()
+    return formatVersion(parseVersion(raw))
+  } catch {
+    return '1.5.000'
+  }
+}
+
+function readProjectVersionCode() {
+  try {
+    const raw = fs.readFileSync(path.join(__dirname, '..', 'VERSION'), 'utf8').trim()
+    return calcVersionCode(parseVersion(raw))
+  } catch {
+    return 1005000
+  }
+}
+
 function defaultConfig() {
+  const ver = readProjectVersion()
+  const code = readProjectVersionCode()
   return {
     updatedAt: Date.now(),
     announcement: {
@@ -17,14 +38,14 @@ function defaultConfig() {
       level: 'info',
     },
     android: {
-      version: '1.4.0',
-      versionCode: 10400,
+      version: ver,
+      versionCode: code,
       url: '',
       mandatory: false,
       changelog: '',
     },
     windows: {
-      version: '1.4.0',
+      version: ver,
       url: '',
       mandatory: false,
       changelog: '',
@@ -54,17 +75,21 @@ export function writeConfig(data) {
   return data
 }
 
-export function parseVersion(v) {
-  const parts = String(v || '0').split('.').map((n) => parseInt(n, 10) || 0)
-  return { major: parts[0] || 0, minor: parts[1] || 0, patch: parts[2] || 0 }
+export function parseVersionLoose(v) {
+  try {
+    return parseVersion(v)
+  } catch {
+    const parts = String(v || '0').split('.').map((n) => parseInt(n, 10) || 0)
+    return { major: parts[0] || 0, minor: parts[1] || 0, micro: parts[2] || 0 }
+  }
 }
 
 export function compareVersion(a, b) {
-  const va = parseVersion(a)
-  const vb = parseVersion(b)
+  const va = parseVersionLoose(a)
+  const vb = parseVersionLoose(b)
   if (va.major !== vb.major) return va.major - vb.major
   if (va.minor !== vb.minor) return va.minor - vb.minor
-  return va.patch - vb.patch
+  return va.micro - vb.micro
 }
 
 export function normalizeAnnouncement(raw, fallback) {

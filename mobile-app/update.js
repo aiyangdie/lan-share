@@ -12,13 +12,17 @@ function updateApiBase() {
     const base = getApiBase()
     if (base) return base
   }
-  if (window.location.port === '8787') return window.location.origin
+  if (typeof pageServerOrigin === 'function') {
+    const origin = pageServerOrigin()
+    if (origin) return origin
+  }
   return ''
 }
 
 function currentPlatform() {
   if (window.LanShareNative) return 'android'
-  if (window.location.port === '8787') return 'windows'
+  if (window.LanShareDesktop) return 'windows'
+  if (typeof isDesktopBrowser === 'function' && isDesktopBrowser()) return 'windows'
   return 'android'
 }
 

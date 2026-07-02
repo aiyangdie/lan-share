@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'lan_share_server'
 const STORAGE_SHARED_SEEN = 'lan_share_seen_shared'
+const DEFAULT_HTTP_PORT = 8787
 
 const $ = (sel) => document.querySelector(sel)
 const $$ = (sel) => document.querySelectorAll(sel)
@@ -40,11 +41,20 @@ function normalizeServer(url) {
   return u
 }
 
-/** 电脑浏览器直接打开本机 8787 时，始终走当前页面同源，避免跨域 */
+function isDesktopBrowser() {
+  if (window.LanShareNative) return false
+  return !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+}
+
+/** 电脑浏览器打开本机服务页时走同源，避免 127.0.0.1 与局域网 IP 跨域 */
 function pageServerOrigin() {
-  if (window.location.port === '8787') return window.location.origin
+  if (!isDesktopBrowser()) return ''
+  const { hostname, origin } = window.location
+  if (hostname === '127.0.0.1' || hostname === 'localhost') return origin
   return ''
 }
+
+window.LanShareEnv = { pageServerOrigin, isDesktopBrowser, DEFAULT_HTTP_PORT }
 
 function getApiBase() {
   return pageServerOrigin() || server
@@ -92,7 +102,8 @@ function updatePathBar() {
 
 function defaultServerHost() {
   const { hostname, host, port } = window.location
-  if (hostname && port === '8787') return host
+  if (hostname === '127.0.0.1' || hostname === 'localhost') return host
+  if (hostname && port === String(DEFAULT_HTTP_PORT)) return host
   return ''
 }
 
@@ -130,7 +141,7 @@ function guessSubnets() {
   return ['192.168.1', '192.168.0', '192.168.31', '10.0.0']
 }
 
-async function probeServer(ip, port = 8787) {
+async function probeServer(ip, port = DEFAULT_HTTP_PORT) {
   try {
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), 1200)
@@ -184,11 +195,11 @@ function renderDiscoverList(peers) {
       </div>
       <div class="discover-meta">
         <div class="discover-name">${escapeHtml(host)}</div>
-        <div class="discover-sub">${escapeHtml(peer.ip)}:${peer.port || 8787}${peer.version ? ` · v${escapeHtml(peer.version)}` : ''}</div>
+        <div class="discover-sub">${escapeHtml(peer.ip)}:${peer.port || DEFAULT_HTTP_PORT}${peer.version ? ` · v${escapeHtml(peer.version)}` : ''}</div>
       </div>
     `
     btn.onclick = async () => {
-      $('#input-server').value = `${peer.ip}:${peer.port || 8787}`
+      $('#input-server').value = `${peer.ip}:${peer.port || DEFAULT_HTTP_PORT}`
       await connectFromSetup()
     }
     list.appendChild(btn)
@@ -213,12 +224,22 @@ async function discoverServers() {
   $('#setup-help').classList.add('hidden')
   try {
     if (window.LanShareNative?.getDiscoveredPeers) {
-      const raw = window.LanShareNative.getDiscoveredPeers()
-      const peers = JSON.parse(raw || '[]')
-      if (peers.length) {
-        renderDiscoverList(mergePeers(peers))
-        return
-      }
+      try {
+        mergePeers(JSON.parse(window.LanShareNative.getDiscoveredPeers() || '[]'))
+      } catch { /* ignore */ }
+    }
+
+    if (discoveredPeers.length) {
+      renderDiscoverList(discoveredPeers)
+    }
+
+    if (window.LanShareNative?.getDiscoveredPeers) {
+      setTimeout(() => {
+        try {
+          const later = JSON.parse(window.LanShareNative.getDiscoveredPeers() || '[]')
+          if (later.length) renderDiscoverList(mergePeers(later))
+        } catch { /* ignore */ }
+      }, 2500)
     }
 
     const local = defaultServerHost()
@@ -326,7 +347,7 @@ async function loadPcSettings() {
     const s = data.settings
     $('#pc-upload-dir').value = s.uploadDir || ''
     $('#pc-shared-dir').value = s.sharedDir || ''
-    $('#pc-port').value = s.port || 8787
+    $('#pc-port').value = s.port || DEFAULT_HTTP_PORT
   } catch { /* ignore */ }
 }
 
@@ -628,7 +649,7 @@ function uploadFile(file, onProgress) {
         reject(new Error(uploadErrorFromXhr(xhr)))
       }
     }
-    xhr.onerror = () => reject(new Error('网络错误：无法连接电脑，请检查 WiFi 与防火墙 8787 端口'))
+    xhr.onerror = () => reject(new Error(`网络错误：无法连接电脑，请检查 WiFi 与防火墙 ${DEFAULT_HTTP_PORT} 端口`))
     xhr.ontimeout = () => reject(new Error('上传超时：文件过大或网络不稳定，请靠近路由器后重试'))
     xhr.onabort = () => reject(new Error('上传已取消'))
     xhr.send(fd)
@@ -675,18 +696,32 @@ async function handleFiles(files) {
   if (!$('#panel-browse').classList.contains('hidden')) loadFiles()
 }
 
+async function collectSharedFiles(rel = '') {
+  const norm = String(rel || '').replace(/^\/+/, '').replace(/\/+$/, '')
+  const browsePath = norm ? `/api/browse/shared/${norm}` : '/api/browse/shared'
+  const res = await fetch(api(browsePath), { cache: 'no-store' })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || '读取共享目录失败')
+  const files = []
+  for (const it of data.items || []) {
+    if (it.isDir) {
+      files.push(...await collectSharedFiles(it.rel || norm))
+    } else {
+      files.push(it)
+    }
+  }
+  return files
+}
+
 async function pollSharedIncoming() {
   if (!connected || !getApiBase()) return
   try {
-    const res = await fetch(api('/api/browse/shared'), { cache: 'no-store' })
-    const data = await res.json()
-    if (!res.ok) return
-    for (const it of data.items) {
-      if (it.isDir) continue
+    const items = await collectSharedFiles()
+    for (const it of items) {
       const key = `${it.rel}:${it.mtime}`
       if (seenShared.has(key)) continue
-      markSharedSeen(key)
-      await downloadFile(it.downloadUrl || `/api/download/shared?p=${encodeURIComponent(it.rel)}`, it.name, true)
+      const ok = await downloadFile(it.downloadUrl || `/api/download/shared?p=${encodeURIComponent(it.rel)}`, it.name, true)
+      if (ok) markSharedSeen(key)
     }
   } catch { /* ignore */ }
 }

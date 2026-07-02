@@ -26,11 +26,24 @@ gradle = gradle.replace(/versionCode\s+\d+/, `versionCode ${code}`)
 gradle = gradle.replace(/versionName\s+"[^"]+"/, `versionName "${version}"`)
 fs.writeFileSync(gradlePath, gradle)
 
-const manifestPath = path.join(ROOT, 'public/manifest.webmanifest')
+const manifestPath = path.join(ROOT, 'mobile-app/manifest.webmanifest')
 if (fs.existsSync(manifestPath)) {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
   manifest.version = version
+  if (!manifest.icons?.length) {
+    manifest.icons = [
+      { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ]
+  }
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
+}
+
+const publicManifest = path.join(ROOT, 'public/manifest.webmanifest')
+if (fs.existsSync(publicManifest)) {
+  const manifest = JSON.parse(fs.readFileSync(publicManifest, 'utf8'))
+  manifest.version = version
+  fs.writeFileSync(publicManifest, JSON.stringify(manifest, null, 2) + '\n')
 }
 
 const versionJs = `window.__LANSHARE_VERSION__ = '${version}'\nwindow.__LANSHARE_VERSION_CODE__ = ${code}\n`

@@ -198,8 +198,14 @@ function parseUpload(req, destDir) {
     const pending = []
     const bb = Busboy({ headers: req.headers })
     bb.on('file', (_name, stream, info) => {
-      const filename = path.basename(info.filename || `file-${Date.now()}`)
-      const dest = path.join(destDir, filename)
+      const filename = path.basename(String(info.filename || `file-${Date.now()}`)).replace(/[\\/]/g, '_')
+      let dest
+      try {
+        dest = safeResolve(destDir, filename)
+      } catch {
+        stream.resume()
+        return
+      }
       pending.push(
         new Promise((res, rej) => {
           const ws = fs.createWriteStream(dest)
@@ -221,10 +227,14 @@ function parseUpload(req, destDir) {
   })
 }
 
+function isIPv4(ni) {
+  return ni.family === 'IPv4' || ni.family === 4
+}
+
 function getLanIpSync() {
   for (const list of Object.values(os.networkInterfaces())) {
     for (const ni of list || []) {
-      if (ni.family === 'IPv4' && !ni.internal && /^192\.168\.|^10\.|^172\.(1[6-9]|2\d|3[01])\./.test(ni.address)) {
+      if (isIPv4(ni) && !ni.internal && /^192\.168\.|^10\.|^172\.(1[6-9]|2\d|3[01])\./.test(ni.address)) {
         return ni.address
       }
     }
@@ -262,8 +272,8 @@ const server = http.createServer(async (req, res) => {
         ok: true,
         settings: {
           port: s.port,
-          uploadDir: UPLOAD_DIR,
-          sharedDir: SHARED_DIR,
+          uploadDir: s.uploadDir,
+          sharedDir: s.sharedDir,
           openAtLogin: s.openAtLogin,
           minimizeToTray: s.minimizeToTray,
           startMinimized: s.startMinimized,
@@ -361,6 +371,10 @@ const server = http.createServer(async (req, res) => {
         if (m) {
           const start = Number(m[1])
           const end = m[2] ? Number(m[2]) : stat.size - 1
+          if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || start > end || end >= stat.size) {
+            res.writeHead(416, { 'Content-Range': `bytes */${stat.size}` })
+            return res.end()
+          }
           res.writeHead(206, {
             'Content-Type': MIME[ext] || 'application/octet-stream',
             'Content-Range': `bytes ${start}-${end}/${stat.size}`,
@@ -404,6 +418,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/upload') {
       const target = url.searchParams.get('target') || 'uploads'
+      if (target !== 'shared' && target !== 'uploads') return json(res, 400, { error: '无效的上传目标' })
       const sub = decodeRelPath(url.searchParams.get('path') || '').replace(/^\//, '')
       const dir = safeResolve(rootDir(target), sub)
       const saved = await parseUpload(req, dir)
@@ -437,7 +452,12 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET') {
       let rel = url.pathname === '/' ? '/index.html' : url.pathname
       for (const root of staticRoots) {
-        const file = path.join(root, rel.replace(/^\//, ''))
+        let file
+        try {
+          file = safeResolve(root, rel.replace(/^\//, ''))
+        } catch {
+          continue
+        }
         if (fs.existsSync(file) && fs.statSync(file).isFile()) {
           const ext = path.extname(file).toLowerCase()
           res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' })

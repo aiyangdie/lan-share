@@ -20,7 +20,7 @@ export default function App() {
     setMsg('')
     try {
       const res = await api.saveSettings(form)
-      setMsg(res.restartRequired ? '已保存，请重启 LanShare 使端口/路径生效' : '已保存')
+      setMsg(res.restartRequired ? '已保存，服务已重启使端口/路径生效' : '已保存')
     } catch (e) {
       setMsg(e.message || '保存失败')
     }

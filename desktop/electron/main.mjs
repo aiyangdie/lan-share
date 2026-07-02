@@ -88,9 +88,20 @@ function openSettingsWindow() {
   settingsWin.on('closed', () => { settingsWin = null })
 }
 
-function openMainUi() {
-  const settings = { port: 8787 }
-  shell.openExternal(`http://127.0.0.1:${settings.port}/`)
+function restartServer() {
+  stopServer()
+  startServer()
+}
+
+async function openMainUi() {
+  try {
+    const { readSettings } = await loadSettingsModule()
+    process.env.LANSHARE_DATA_DIR = app.getPath('userData')
+    const s = readSettings()
+    shell.openExternal(`http://127.0.0.1:${s.port}/`)
+  } catch {
+    shell.openExternal('http://127.0.0.1:8787/')
+  }
 }
 
 function buildTray() {
@@ -117,11 +128,16 @@ ipcMain.handle('settings:get', async () => {
 })
 
 ipcMain.handle('settings:save', async (_e, patch) => {
-  const { writeSettings } = await loadSettingsModule()
+  const { readSettings, writeSettings } = await loadSettingsModule()
   process.env.LANSHARE_DATA_DIR = app.getPath('userData')
+  const prev = readSettings()
   const next = writeSettings(patch)
   await applyLoginItem()
-  return { ok: true, settings: next, restartRequired: true }
+  const restartRequired = next.port !== prev.port
+    || next.uploadDir !== prev.uploadDir
+    || next.sharedDir !== prev.sharedDir
+  if (restartRequired) restartServer()
+  return { ok: true, settings: next, restartRequired }
 })
 
 ipcMain.handle('app:openFolder', async (_e, folderPath) => {

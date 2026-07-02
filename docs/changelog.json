@@ -3,12 +3,29 @@
   "description": "LanShare 细粒度更新留痕。每条记录对应一次版本 +0.001 与一次 Git 提交。",
   "entries": [
     {
+      "version": "1.5.001",
+      "date": "2026-07-02",
+      "time": "2026-07-02T13:37:25.119Z",
+      "summary": "综合修复：IP/设置/发现/传输/同步/Electron重启/admin版本号",
+      "versionCode": 1005001,
+      "components": [
+        "desktop",
+        "admin"
+      ]
+    },
+    {
       "version": "1.5.000",
       "date": "2026-07-02",
       "time": "2026-07-02T00:00:00.000Z",
       "summary": "基线：Electron 电脑端雏形、设置 API、运营后台 v1.4、在线更新与广告",
       "versionCode": 1005000,
-      "components": ["desktop", "server", "admin", "android", "website"]
+      "components": [
+        "desktop",
+        "server",
+        "admin",
+        "android",
+        "website"
+      ]
     },
     {
       "version": "1.4.000",
@@ -16,7 +33,11 @@
       "time": "2026-07-02T00:00:00.000Z",
       "summary": "运营后台、广告位、APK/EXE 在线更新、系统公告",
       "versionCode": 1004000,
-      "components": ["admin", "android", "server"]
+      "components": [
+        "admin",
+        "android",
+        "server"
+      ]
     },
     {
       "version": "1.3.000",
@@ -24,7 +45,10 @@
       "time": "2026-07-02T00:00:00.000Z",
       "summary": "文件删除/清空、传输错误提示、电脑共享自动保存到手机下载",
       "versionCode": 1003000,
-      "components": ["android", "server"]
+      "components": [
+        "android",
+        "server"
+      ]
     },
     {
       "version": "1.2.000",
@@ -32,7 +56,11 @@
       "time": "2026-07-02T00:00:00.000Z",
       "summary": "UDP 自动发现、Windows 便携 exe、官网与连接指引",
       "versionCode": 1002000,
-      "components": ["android", "server", "website"]
+      "components": [
+        "android",
+        "server",
+        "website"
+      ]
     }
   ]
 }

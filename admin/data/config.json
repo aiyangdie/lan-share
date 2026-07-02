@@ -8,16 +8,16 @@
     "level": "info"
   },
   "android": {
-    "version": "1.4.0",
-    "versionCode": 10400,
-    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.4.0/lan-share-v1.4.0-android.apk",
+    "version": "1.5.001",
+    "versionCode": 1005001,
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.001/lan-share-v1.5.001-android.apk",
     "mandatory": false,
-    "changelog": "运营后台 · 广告位 · 系统公告 · APK/EXE 在线更新"
+    "changelog": "综合修复：IP/发现/传输/设置同步；v1.5.001 正式 APK"
   },
   "windows": {
-    "version": "1.4.0",
-    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.4.0/lan-share-v1.4.0-windows-portable.zip",
+    "version": "1.5.001",
+    "url": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.001/lan-share-v1.5.001-windows-portable.zip",
     "mandatory": false,
-    "changelog": "广告后台 · 在线更新 · 系统公告"
+    "changelog": "综合修复 + Windows 便携版 v1.5.001（含 node.exe 与 LanShare.exe）"
   }
 }

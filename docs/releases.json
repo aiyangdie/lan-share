@@ -1,16 +1,25 @@
 {
   "latest": {
-    "version": "1.5.000",
-    "tag": "v1.5.000",
+    "version": "1.5.001",
+    "tag": "v1.5.001",
     "date": "2026-07-02",
-    "summary": "Electron 电脑端雏形 · 设置 API · 运营后台 · 细粒度版本留痕",
+    "summary": "综合修复 + v1.5.001 正式安装包（APK / Windows 便携版）",
     "assets": {
-      "windows": "lan-share-v1.4.0-windows-portable.zip",
-      "android": "lan-share-v1.2.0-android.apk",
-      "androidLocal": "downloads/lan-share-v1.2.0-android.apk"
+      "windows": "lan-share-v1.5.001-windows-portable.zip",
+      "android": "lan-share-v1.5.001-android.apk",
+      "androidLocal": "downloads/lan-share-v1.5.001-android.apk",
+      "serverWindows": "lan-share-v1.5.001-server-windows-x64.zip",
+      "serverLinux": "lan-share-v1.5.001-server-linux-x64.tar.gz",
+      "githubBase": "https://github.com/aiyangdie/lan-share/releases/download/v1.5.001"
     }
   },
   "history": [
+    {
+      "tag": "v1.5.001",
+      "version": "1.5.001",
+      "date": "2026-07-02",
+      "summary": "综合修复、APK/Windows 打包"
+    },
     {
       "tag": "v1.4.0",
       "version": "1.4.0",
