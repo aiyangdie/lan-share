@@ -3,168 +3,397 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LanShare · 电脑互传</title>
-  <meta name="description" content="手机和电脑在同一 WiFi 下互传文件，无需云盘、无需账号，开源免费。" />
+  <title>LanShare · 电脑互传 — 局域网文件传输，开源免费</title>
+  <meta name="description" content="LanShare：手机和电脑在同一 WiFi 下互传文件。UDP 自动发现、双向传输、MIT 开源。支持 Windows / Android / iPhone PWA。" />
+  <meta name="keywords" content="局域网,文件传输,电脑互传,WiFi,开源,Android,Windows" />
+  <meta property="og:title" content="LanShare · 电脑互传" />
+  <meta property="og:description" content="同一 WiFi 下手机与电脑互传文件，无需云盘与账号。" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%236366f1'/><path d='M10 16h12M16 10v12' stroke='%23fff' stroke-width='2.5' stroke-linecap='round'/></svg>" />
   <style>
     :root {
-      --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --muted: #94a3b8;
-      --accent: #6366f1; --accent2: #818cf8; --ok: #34d399; --line: rgba(255,255,255,.08);
+      --bg: #0b1120; --surface: #1e293b; --surface2: #0f172a;
+      --text: #f1f5f9; --muted: #94a3b8; --dim: #64748b;
+      --accent: #6366f1; --accent2: #818cf8; --ok: #34d399;
+      --warn: #fbbf24; --line: rgba(255,255,255,.07);
+      --radius: 14px; --max: 920px;
     }
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
-      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
-      background: radial-gradient(ellipse at top, #1e1b4b 0%, var(--bg) 55%);
-      color: var(--text); line-height: 1.6;
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.65;
     }
     a { color: var(--accent2); text-decoration: none; }
-    .wrap { max-width: 880px; margin: 0 auto; padding: 36px 20px 64px; }
-    .hero { text-align: center; padding: 20px 0 32px; }
+    a:hover { text-decoration: underline; }
+    code { background: rgba(255,255,255,.08); padding: 2px 7px; border-radius: 6px; font-size: .86em; font-family: ui-monospace, Consolas, monospace; }
+    .nav {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(11,17,32,.88); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-inner {
+      max-width: var(--max); margin: 0 auto; padding: 0 20px;
+      display: flex; align-items: center; justify-content: space-between; height: 52px; gap: 12px;
+    }
+    .nav-brand { font-weight: 700; color: var(--text); text-decoration: none; font-size: .95rem; }
+    .nav-links { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .82rem; }
+    .nav-links a { color: var(--muted); text-decoration: none; }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 20px 72px; }
+    section { scroll-margin-top: 64px; padding-top: 48px; }
+    .hero { text-align: center; padding: 48px 0 24px; }
     .logo {
-      width: 68px; height: 68px; border-radius: 18px;
+      width: 72px; height: 72px; border-radius: 20px;
       background: linear-gradient(135deg, var(--accent), #8b5cf6);
       display: inline-flex; align-items: center; justify-content: center;
-      font-size: 1.8rem; font-weight: 800; margin-bottom: 16px;
-      box-shadow: 0 12px 32px rgba(99,102,241,.35);
+      font-size: 2rem; font-weight: 800; margin-bottom: 18px;
+      box-shadow: 0 16px 40px rgba(99,102,241,.35);
     }
-    h1 { font-size: 2rem; margin: 0 0 8px; }
-    .subtitle { color: var(--muted); margin: 0 auto 20px; max-width: 520px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 12px; margin: 28px 0; }
-    .card { background: rgba(30,41,59,.85); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
-    .card h3 { margin: 0 0 4px; font-size: .95rem; }
-    .card p { margin: 0; color: var(--muted); font-size: .85rem; }
-    h2 { margin: 36px 0 12px; font-size: 1.15rem; display: flex; align-items: center; gap: 10px; }
-    .section-desc { color: var(--muted); font-size: .875rem; margin: -6px 0 14px; }
+    h1 { font-size: clamp(1.75rem, 5vw, 2.25rem); margin: 0 0 10px; letter-spacing: -.02em; }
+    .subtitle { color: var(--muted); margin: 0 auto 20px; max-width: 560px; font-size: 1.05rem; }
+    .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 28px; }
+    .badge {
+      font-size: .75rem; padding: 5px 12px; border-radius: 999px;
+      background: rgba(255,255,255,.06); border: 1px solid var(--line); color: var(--muted);
+    }
+    .badge.ok { background: rgba(52,211,153,.12); border-color: rgba(52,211,153,.25); color: var(--ok); }
+    h2 { font-size: 1.25rem; margin: 0 0 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    h3 { font-size: 1rem; margin: 0 0 6px; }
+    .section-desc { color: var(--muted); font-size: .9rem; margin: 0 0 20px; max-width: 680px; }
+    .tag { font-size: .7rem; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: rgba(52,211,153,.15); color: var(--ok); }
+    .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px;
+    }
+    .card p { margin: 0; color: var(--muted); font-size: .88rem; }
+    .card-icon { font-size: 1.4rem; margin-bottom: 8px; }
+    .fig { margin: 20px 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); background: var(--surface2); }
+    .fig img { display: block; width: 100%; height: auto; }
+    .fig-cap { padding: 10px 14px; font-size: .78rem; color: var(--dim); border-top: 1px solid var(--line); }
 
-    /* ── 最新版 ── */
+    /* download */
     .latest-box {
-      background: linear-gradient(135deg, rgba(99,102,241,.18), rgba(30,41,59,.95));
-      border: 1px solid rgba(99,102,241,.35); border-radius: 18px; padding: 22px;
+      background: linear-gradient(135deg, rgba(99,102,241,.14), rgba(30,41,59,.95));
+      border: 1px solid rgba(99,102,241,.3); border-radius: 18px; padding: 22px;
     }
-    .latest-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
-    .latest-ver { font-size: 1.5rem; font-weight: 700; }
+    .latest-ver { font-size: 1.6rem; font-weight: 700; }
     .latest-ver span { color: var(--accent2); }
-    .tag-latest {
-      font-size: .75rem; font-weight: 600; padding: 4px 10px; border-radius: 999px;
-      background: rgba(52,211,153,.18); color: var(--ok);
-    }
     .latest-meta { color: var(--muted); font-size: .85rem; margin-top: 4px; }
-    .dl-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+    .dl-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 16px; }
     .dl-item {
-      background: rgba(15,23,42,.6); border: 1px solid var(--line); border-radius: 14px;
-      padding: 16px; display: flex; flex-direction: column; gap: 12px;
+      background: rgba(15,23,42,.65); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 16px; display: flex; flex-direction: column; gap: 10px;
     }
-    .dl-item strong { font-size: 1rem; }
-    .dl-item small { color: var(--muted); font-size: .78rem; line-height: 1.4; }
+    .dl-item small { color: var(--muted); font-size: .78rem; line-height: 1.45; }
     .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      display: inline-flex; align-items: center; justify-content: center;
       padding: 12px 18px; border-radius: 10px; border: none; font-size: .9rem;
-      font-weight: 600; cursor: pointer; text-decoration: none; transition: transform .12s;
+      font-weight: 600; cursor: pointer; text-decoration: none; transition: transform .12s, opacity .12s;
     }
-    .btn:hover { transform: translateY(-1px); text-decoration: none; }
+    .btn:hover { transform: translateY(-1px); text-decoration: none; opacity: .95; }
     .btn-win { background: var(--accent); color: #fff; }
     .btn-apk { background: #059669; color: #fff; }
-    .btn-link { background: rgba(255,255,255,.08); color: #fff; font-size: .8rem; padding: 8px 12px; }
-    .mirrors { margin-top: 4px; }
-    .mirrors summary { cursor: pointer; color: var(--muted); font-size: .78rem; }
+    .btn-ghost { background: rgba(255,255,255,.07); color: #fff; font-size: .8rem; padding: 8px 12px; }
+    .mirrors summary { cursor: pointer; color: var(--dim); font-size: .78rem; }
     .mirror-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-
-    /* ── 历史版本 ── */
     .history-list { display: flex; flex-direction: column; gap: 8px; }
     .history-item {
       display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      padding: 14px 16px; border-radius: 12px; background: rgba(30,41,59,.7);
-      border: 1px solid var(--line); color: inherit; text-decoration: none;
-      transition: border-color .15s, background .15s;
+      padding: 14px 16px; border-radius: 12px; background: var(--surface);
+      border: 1px solid var(--line); color: inherit; text-decoration: none; transition: border-color .15s;
     }
-    .history-item:hover { border-color: rgba(129,140,248,.45); background: rgba(30,41,59,.95); text-decoration: none; }
-    .history-item strong { font-size: .95rem; }
+    .history-item:hover { border-color: rgba(129,140,248,.4); text-decoration: none; }
     .history-item small { display: block; color: var(--muted); font-size: .78rem; margin-top: 2px; }
-    .history-arrow { color: var(--muted); font-size: 1.1rem; flex-shrink: 0; }
-    .history-note { color: var(--muted); font-size: .8rem; margin-top: 8px; }
 
-    ol, ul { color: var(--muted); padding-left: 1.2rem; font-size: .9rem; }
-    footer { margin-top: 40px; text-align: center; color: var(--muted); font-size: .8rem; }
-    code { background: rgba(255,255,255,.08); padding: 2px 6px; border-radius: 5px; font-size: .88em; }
+    /* steps */
+    .steps { counter-reset: step; display: flex; flex-direction: column; gap: 12px; }
+    .step {
+      display: flex; gap: 14px; align-items: flex-start;
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px;
+    }
+    .step-num {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px;
+      background: var(--accent); color: #fff; font-size: .85rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .step p { margin: 4px 0 0; color: var(--muted); font-size: .88rem; }
+
+    /* tables */
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--line); }
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--line); }
+    th { background: rgba(255,255,255,.04); color: var(--muted); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+    tr:last-child td { border-bottom: none; }
+    td code { font-size: .82em; }
+
+    /* discovery flow */
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0; }
+    .flow-node {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+      padding: 10px 14px; font-size: .82rem; text-align: center; min-width: 100px;
+    }
+    .flow-arrow { color: var(--dim); font-size: 1.1rem; }
+
+    /* faq */
+    details.faq {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+      padding: 14px 16px; margin-bottom: 8px;
+    }
+    details.faq summary { cursor: pointer; font-weight: 600; font-size: .92rem; }
+    details.faq p { margin: 10px 0 0; color: var(--muted); font-size: .88rem; }
+
+    footer {
+      margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--line);
+      text-align: center; color: var(--dim); font-size: .82rem;
+    }
     .toast {
       position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: #334155; color: #fff; padding: 10px 16px; border-radius: 10px;
-      font-size: .85rem; opacity: 0; transition: opacity .2s; z-index: 99;
+      background: #334155; color: #fff; padding: 10px 18px; border-radius: 10px;
+      font-size: .85rem; opacity: 0; transition: opacity .2s; z-index: 99; pointer-events: none;
     }
     .toast.show { opacity: 1; }
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .flow { flex-direction: column; align-items: stretch; }
+      .flow-arrow { text-align: center; transform: rotate(90deg); }
+    }
   </style>
 </head>
 <body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="#">⇄ LanShare</a>
+      <div class="nav-links">
+        <a href="#download">下载</a>
+        <a href="#features">特性</a>
+        <a href="#architecture">架构</a>
+        <a href="#tech">技术</a>
+        <a href="#guide">使用</a>
+        <a href="#faq">FAQ</a>
+        <a href="#opensource">开源</a>
+      </div>
+    </div>
+  </nav>
+
   <div class="wrap">
-    <section class="hero">
+    <header class="hero">
       <div class="logo">⇄</div>
       <h1>LanShare · 电脑互传</h1>
-      <p class="subtitle">手机和电脑在同一 WiFi 下互传文件。无需云盘、无需账号。</p>
+      <p class="subtitle">手机和电脑在<strong>同一 WiFi</strong> 下互传文件。数据不出局域网，无需云盘、无需注册账号。</p>
+      <div class="badges">
+        <span class="badge ok">MIT 开源</span>
+        <span class="badge">v1.2 自动发现</span>
+        <span class="badge">Windows / Android / iPhone</span>
+        <span class="badge">Node.js ≥ 18</span>
+      </div>
+    </header>
+
+    <!-- 特性 -->
+    <section id="features">
+      <h2>核心特性</h2>
+      <p class="section-desc">轻量、本地、可自部署。PC 当文件网关，手机用同一套 Web UI（浏览器 / APK / PWA）。</p>
+      <div class="grid3">
+        <div class="card"><div class="card-icon">📡</div><h3>UDP 自动发现</h3><p>手机搜索附近电脑，无需手输 IP。v1.2 起支持三层发现策略。</p></div>
+        <div class="card"><div class="card-icon">⚡</div><h3>一键启动</h3><p>Windows 双击 <code>LanShare.exe</code>，自动打开 <code>:8787</code> 并创建数据目录。</p></div>
+        <div class="card"><div class="card-icon">↕️</div><h3>双向互传</h3><p>手机上传到 <code>uploads/</code>；电脑放入 <code>shared/</code> 供手机下载。</p></div>
+        <div class="card"><div class="card-icon">🔒</div><h3>数据本地化</h3><p>不经第三方服务器，适合家庭 / 办公室内网传文件。</p></div>
+        <div class="card"><div class="card-icon">📱</div><h3>跨平台客户端</h3><p>Android APK、iPhone Safari PWA、任意手机浏览器均可使用。</p></div>
+        <div class="card"><div class="card-icon">🛠</div><h3>开发者友好</h3><p>纯 REST API + 单文件服务端，依赖仅 <code>busboy</code>，易于二次开发。</p></div>
+      </div>
     </section>
 
-    <div class="grid">
-      <div class="card"><h3>自动发现</h3><p>手机自动搜索局域网内的电脑</p></div>
-      <div class="card"><h3>一键启动</h3><p>Windows 双击 LanShare.exe</p></div>
-      <div class="card"><h3>双向互传</h3><p>上传、浏览、共享文件夹</p></div>
-    </div>
-
-    <!-- 最新版：点击直接下载 -->
-    <h2>最新版 <span class="tag-latest">推荐</span></h2>
-    <p class="section-desc">点击下方按钮即可下载，无需打开 GitHub</p>
-    <div class="latest-box" id="latest-box">
-      <div class="latest-top">
-        <div>
-          <div class="latest-ver">v<span id="latest-ver">—</span></div>
-          <div class="latest-meta" id="latest-meta"></div>
-        </div>
-      </div>
-      <div class="dl-row">
-        <div class="dl-item">
-          <div>
+    <!-- 下载 -->
+    <section id="download">
+      <h2>下载最新版 <span class="tag">推荐</span></h2>
+      <p class="section-desc">国内可直连本页下载，无需打开 GitHub。Windows 约 26 MB，Android APK 约 3 MB。</p>
+      <div class="latest-box">
+        <div class="latest-ver">v<span id="latest-ver">—</span></div>
+        <div class="latest-meta" id="latest-meta"></div>
+        <div class="dl-row">
+          <div class="dl-item">
             <strong>Windows 电脑端</strong>
             <small id="win-desc">便携 zip · 解压后双击 LanShare.exe</small>
+            <a class="btn btn-win" id="btn-win" href="#">下载 Windows 版</a>
+            <details class="mirrors"><summary>备用镜像（GitHub 加速）</summary><div class="mirror-btns" id="mirrors-win"></div></details>
           </div>
-          <a class="btn btn-win" id="btn-win" href="#">下载 Windows 版</a>
-          <details class="mirrors">
-            <summary>备用镜像</summary>
-            <div class="mirror-btns" id="mirrors-win"></div>
-          </details>
-        </div>
-        <div class="dl-item">
-          <div>
+          <div class="dl-item">
             <strong>Android 手机端</strong>
-            <small id="apk-desc">APK 安装包 · 支持自动发现电脑</small>
+            <small id="apk-desc">APK · 支持自动发现附近电脑</small>
+            <a class="btn btn-apk" id="btn-apk" href="#">下载 Android 版</a>
+            <details class="mirrors"><summary>备用镜像</summary><div class="mirror-btns" id="mirrors-apk"></div></details>
           </div>
-          <a class="btn btn-apk" id="btn-apk" href="#">下载 Android 版</a>
-          <details class="mirrors">
-            <summary>备用镜像</summary>
-            <div class="mirror-btns" id="mirrors-apk"></div>
-          </details>
         </div>
       </div>
-    </div>
 
-    <!-- 历史版本：跳转 GitHub -->
-    <h2>历史版本</h2>
-    <p class="section-desc">点击下方版本，跳转到 GitHub Releases 页面下载（需能访问 GitHub）</p>
-    <div class="history-list" id="history-list"></div>
-    <p class="history-note">全部版本列表：<a id="all-releases" href="#">GitHub Releases</a></p>
+      <h2 style="margin-top:36px">历史版本</h2>
+      <p class="section-desc">旧版安装包请前往 GitHub Releases（需能访问 GitHub）。</p>
+      <div class="history-list" id="history-list"></div>
+      <p style="color:var(--dim);font-size:.82rem;margin-top:10px">全部版本：<a id="all-releases" href="#">GitHub Releases</a></p>
+    </section>
 
-    <h2>快速开始</h2>
-    <ol>
-      <li>电脑：下载 Windows 版 → 解压 → 双击 <code>LanShare.exe</code></li>
-      <li>手机：下载 Android 版 → 安装 → 点「附近电脑」连接</li>
-      <li>传文件：手机上传 → 电脑 <code>uploads/</code>；电脑放入 <code>shared/</code> → 手机下载</li>
-    </ol>
+    <!-- 架构 -->
+    <section id="architecture">
+      <h2>系统架构</h2>
+      <p class="section-desc">PC 运行 Node 服务作为中枢；手机通过 HTTP 调 API，Android 额外用原生 UDP 加速发现。</p>
+      <figure class="fig">
+        <img src="./images/architecture.svg" alt="LanShare 架构示意图：PC server.mjs 与手机 app.js 通过 HTTP 8787 通信，UDP 38787 用于自动发现" width="920" height="420" loading="lazy" />
+        <figcaption class="fig-cap">PC 端 <code>server.mjs</code> 监听 8787，<code>discovery.mjs</code> 每 3 秒 UDP 广播；手机 <code>app.js</code> 统一 UI，Android <code>DiscoveryBridge</code> 补充原生发现。</figcaption>
+      </figure>
+      <figure class="fig">
+        <img src="./images/flow-upload.svg" alt="文件传输流程：上传与下载" width="800" height="200" loading="lazy" />
+        <figcaption class="fig-cap">上传走 <code>POST /api/upload</code>；下载走 <code>GET /api/browse</code> + <code>GET /api/download</code>。</figcaption>
+      </figure>
 
-    <h2>连接不上？</h2>
-    <ul>
-      <li>电脑已运行 LanShare，手机和电脑同一 WiFi</li>
-      <li>防火墙允许 8787 端口，关闭 VPN 后重试</li>
-    </ul>
+      <h3 style="margin-top:28px">自动发现流程</h3>
+      <div class="flow">
+        <div class="flow-node">PC 广播<br><code>type:lanshare</code></div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">UDP :38787</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">手机监听 / 扫描</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">GET /api/health</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">显示附近电脑</div>
+      </div>
+      <p class="section-desc" style="margin-top:0">备用策略：服务端 <code>/api/discover/scan</code> 或客户端扫描 <code>192.168.x.1~254</code>（批量探测，超时 900ms）。</p>
+    </section>
+
+    <!-- 技术 -->
+    <section id="tech">
+      <h2>技术细节</h2>
+      <p class="section-desc">开源仓库：<a id="repo-link-top" href="#">github.com/aiyangdie/lan-share</a></p>
+
+      <div class="grid2" style="margin-bottom:20px">
+        <div class="card">
+          <h3>技术栈</h3>
+          <ul style="margin:8px 0 0;padding-left:1.1rem;color:var(--muted);font-size:.88rem">
+            <li>服务端：Node.js ≥ 18 · ES Module · <code>server.mjs</code></li>
+            <li>上传解析：Busboy（multipart）</li>
+            <li>客户端：原生 HTML/CSS/JS（<code>mobile-app/</code>）</li>
+            <li>Android：WebView + Java 桥接（<code>DiscoveryBridge</code>）</li>
+            <li>Windows：C# 启动器 + 内嵌 Node 便携包</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>关键常量</h3>
+          <ul style="margin:8px 0 0;padding-left:1.1rem;color:var(--muted);font-size:.88rem">
+            <li>HTTP 端口：<code>8787</code>（环境变量 <code>PORT</code> 可覆盖）</li>
+            <li>UDP 发现：<code>38787</code></li>
+            <li>协议标识：<code>lanshare</code></li>
+            <li>服务校验：<code>/api/health</code> 返回 <code>name: lan-share</code></li>
+            <li>Peer 缓存 TTL：30 秒</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>HTTP API</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>方法</th><th>路径</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td><code>GET</code></td><td><code>/api/health</code></td><td>健康检查，返回版本、IP、端口</td></tr>
+            <tr><td><code>GET</code></td><td><code>/api/discover/peers</code></td><td>UDP 被动发现的附近电脑列表</td></tr>
+            <tr><td><code>GET</code></td><td><code>/api/discover/scan</code></td><td>主动扫描当前 /24 子网</td></tr>
+            <tr><td><code>GET</code></td><td><code>/api/roots</code></td><td>根目录：<code>uploads</code> / <code>shared</code></td></tr>
+            <tr><td><code>GET</code></td><td><code>/api/browse/{root}/{path}</code></td><td>浏览文件夹</td></tr>
+            <tr><td><code>GET</code></td><td><code>/api/download/{root}?p=...</code></td><td>下载文件（支持 Range 断点）</td></tr>
+            <tr><td><code>POST</code></td><td><code>/api/upload?target=&amp;path=</code></td><td>multipart 上传文件</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top:24px">平台支持</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>平台</th><th>角色</th><th>使用方式</th></tr></thead>
+          <tbody>
+            <tr><td>Windows</td><td>服务端 + 可选 UI</td><td>解压 zip → <code>LanShare.exe</code> 或 <code>npm start</code></td></tr>
+            <tr><td>Android</td><td>客户端</td><td>安装 APK，点「附近电脑」连接</td></tr>
+            <tr><td>iPhone / iPad</td><td>客户端 (PWA)</td><td>Safari 打开 <code>http://电脑IP:8787</code> → 添加到主屏幕</td></tr>
+            <tr><td>macOS / Linux</td><td>服务端</td><td><code>node server.mjs</code>（Release 提供 zip/tar）</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top:24px">源码结构</h3>
+      <div class="card" style="font-size:.82rem;line-height:1.7;color:var(--muted);font-family:ui-monospace,Consolas,monospace;overflow-x:auto">
+<pre style="margin:0;white-space:pre">lan-share/
+├── server.mjs              # PC HTTP 服务
+├── scripts/discovery.mjs   # UDP 发现 + 子网扫描
+├── mobile-app/             # ★ UI 源码（改这里）
+├── public/                 # 同步到浏览器托管
+├── android/                # WebView APK + DiscoveryBridge
+└── docs/                   # 本官网 (GitHub Pages)</pre>
+      </div>
+    </section>
+
+    <!-- 使用指南 -->
+    <section id="guide">
+      <h2>快速开始</h2>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div><strong>电脑启动服务</strong><p>下载 Windows 版 → 解压 → 双击 <code>LanShare.exe</code>。浏览器会自动打开 <code>http://127.0.0.1:8787/</code>，同目录生成 <code>shared/</code> 与 <code>uploads/</code>。</p></div></div>
+        <div class="step"><div class="step-num">2</div><div><strong>手机连接</strong><p>安装 Android APK，确保与电脑<strong>同一 WiFi</strong>。打开 App →「附近电脑」自动发现 → 点击连接。iPhone 用 Safari 访问电脑 IP:8787。</p></div></div>
+        <div class="step"><div class="step-num">3</div><div><strong>互传文件</strong><p>手机「上传」→ 文件进电脑 <code>uploads/</code>；电脑文件放入 <code>shared/</code> → 手机「电脑共享」里下载。</p></div></div>
+      </div>
+
+      <h3 style="margin-top:28px">开发者</h3>
+      <div class="card">
+<pre style="margin:0;font-size:.82rem;line-height:1.7;color:var(--muted);overflow-x:auto"><code>git clone https://github.com/aiyangdie/lan-share.git
+cd lan-share && npm install && npm start   # localhost:8787
+npm run sync                              # 同步 UI 到 public / Android
+npm run build:release                     # 打包全部安装包</code></pre>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq">
+      <h2>常见问题</h2>
+      <details class="faq" open>
+        <summary>手机找不到附近电脑？</summary>
+        <p>确认电脑已运行 LanShare、手机与电脑在同一 WiFi（非访客网络）。关闭 VPN。Windows 防火墙放行 <strong>8787</strong> 端口。仍不行则在手机端手动输入 <code>http://电脑IP:8787</code>。</p>
+      </details>
+      <details class="faq">
+        <summary>连上但上传失败？</summary>
+        <p>检查磁盘空间与文件夹权限。服务端 <code>uploads/</code> 需可写。文件名含中文时服务端已做 UTF-8 乱码修复（<code>fixMojibake</code>）。</p>
+      </details>
+      <details class="faq">
+        <summary>iPhone 怎么用？</summary>
+        <p>Safari 打开 <code>http://电脑局域网IP:8787</code>，点击分享 →「添加到主屏幕」。即为 PWA，体验接近 App（iOS 无原生 UDP 发现，建议手动输入 IP 或扫电脑屏幕上的地址）。</p>
+      </details>
+      <details class="faq">
+        <summary>数据安全吗？</summary>
+        <p>文件仅在局域网内传输，不经 LanShare 官方服务器。建议在可信 WiFi 下使用；如需加密可考虑 VPN 或 HTTPS 反向代理（默认 HTTP 明文，适合内网）。</p>
+      </details>
+      <details class="faq">
+        <summary>和微信 / 网盘比有什么优势？</summary>
+        <p>无大小限制（受磁盘与网络影响）、无账号、速度快（局域网直连）、可批量传文件夹。适合同一办公室 / 家庭内设备互传。</p>
+      </details>
+    </section>
+
+    <!-- 开源 -->
+    <section id="opensource">
+      <h2>开源</h2>
+      <p class="section-desc">LanShare 采用 MIT 协议，欢迎 Star、Issue 与 Pull Request。</p>
+      <div class="grid2">
+        <a class="card" id="card-repo" href="#" style="color:inherit;text-decoration:none">
+          <h3>GitHub 仓库</h3>
+          <p>完整源码、Issue、贡献指南</p>
+        </a>
+        <a class="card" href="https://github.com/aiyangdie/lan-share/blob/main/README.md" style="color:inherit;text-decoration:none">
+          <h3>README 文档</h3>
+          <p>含 Mermaid 思维导图、API 说明、构建流水线</p>
+        </a>
+      </div>
+    </section>
 
     <footer>
-      MIT 开源 · <a href="mailto:aike1015@qq.com">aike1015@qq.com</a> ·
-      <a id="repo-link" href="#">GitHub</a>
+      <p>MIT License · <a href="mailto:aike1015@qq.com">aike1015@qq.com</a> ·
+      <a id="repo-link" href="#">GitHub</a> ·
+      <a href="https://github.com/aiyangdie/lan-share/releases">Releases</a></p>
+      <p style="margin-top:8px">LanShare — 局域网文件互传，数据留在你的网络里。</p>
     </footer>
   </div>
   <div class="toast" id="toast"></div>
@@ -178,31 +407,35 @@
     function ghReleaseUrl(repo, tag) {
       return `https://github.com/${repo}/releases/tag/${tag}`
     }
-
     function ghAssetUrl(repo, tag, filename) {
       return `https://github.com/${repo}/releases/download/${tag}/${filename}`
     }
-
-    function mirrorUrl(prefix, raw) {
-      return prefix ? prefix + raw : raw
-    }
+    function mirrorUrl(prefix, raw) { return prefix ? prefix + raw : raw }
 
     function toast(msg) {
       const el = document.getElementById('toast')
       el.textContent = msg
       el.classList.add('show')
       clearTimeout(toast._t)
-      toast._t = setTimeout(() => el.classList.remove('show'), 2000)
+      toast._t = setTimeout(() => el.classList.remove('show'), 2200)
+    }
+
+    function setRepoLinks(repo) {
+      const url = `https://github.com/${repo}`
+      document.getElementById('repo-link').href = url
+      document.getElementById('repo-link-top').href = url
+      document.getElementById('repo-link-top').textContent = repo
+      document.getElementById('card-repo').href = url
     }
 
     async function init() {
       const data = await fetch('./releases.json').then(r => r.json())
       const { latest, history, repo } = data
       const tag = latest.tag
+      setRepoLinks(repo)
 
       document.getElementById('latest-ver').textContent = latest.version
-      document.getElementById('latest-meta').textContent =
-        `${latest.date} · ${latest.summary}`
+      document.getElementById('latest-meta').textContent = `${latest.date} · ${latest.summary}`
 
       const winFile = latest.assets.windows
       const apkFile = latest.assets.android
@@ -211,36 +444,31 @@
         ? new URL(latest.assets.androidLocal, location.href).href
         : ghAssetUrl(repo, tag, apkFile)
 
-      document.getElementById('win-desc').textContent =
-        `${winFile} · 约 26 MB · 解压后双击 LanShare.exe`
-      document.getElementById('apk-desc').textContent =
-        `${apkFile} · 约 3 MB`
+      document.getElementById('win-desc').textContent = `${winFile} · 约 26 MB · 解压后双击 LanShare.exe`
+      document.getElementById('apk-desc').textContent = `${apkFile} · 约 3 MB · 支持自动发现`
 
-      // 最新版：主按钮直接下载
       document.getElementById('btn-win').href = mirrorUrl(MIRRORS[0].prefix, winRaw)
       document.getElementById('btn-apk').href = apkLocal
       document.getElementById('btn-apk').setAttribute('download', apkFile)
 
-      // 备用镜像
       const winMirrors = document.getElementById('mirrors-win')
       const apkMirrors = document.getElementById('mirrors-apk')
       MIRRORS.forEach((m, i) => {
         if (i === 0) return
         const w = document.createElement('a')
-        w.className = 'btn btn-link'
+        w.className = 'btn btn-ghost'
         w.href = mirrorUrl(m.prefix, winRaw)
         w.textContent = m.name
         winMirrors.appendChild(w)
       })
       MIRRORS.forEach((m) => {
         const a = document.createElement('a')
-        a.className = 'btn btn-link'
+        a.className = 'btn btn-ghost'
         a.href = mirrorUrl(m.prefix, ghAssetUrl(repo, tag, apkFile))
         a.textContent = m.name
         apkMirrors.appendChild(a)
       })
 
-      // 历史版本：跳转 GitHub Release 页
       const list = document.getElementById('history-list')
       history.forEach((item) => {
         const a = document.createElement('a')
@@ -248,20 +476,11 @@
         a.href = ghReleaseUrl(repo, item.tag)
         a.target = '_blank'
         a.rel = 'noopener'
-        a.innerHTML = `
-          <div>
-            <strong>${item.tag}</strong>
-            <small>${item.date} · ${item.summary}</small>
-          </div>
-          <span class="history-arrow">→ GitHub</span>
-        `
+        a.innerHTML = `<div><strong>${item.tag}</strong><small>${item.date} · ${item.summary}</small></div><span style="color:var(--dim)">→ GitHub</span>`
         list.appendChild(a)
       })
 
-      document.getElementById('all-releases').href =
-        `https://github.com/${repo}/releases`
-      document.getElementById('repo-link').href =
-        `https://github.com/${repo}`
+      document.getElementById('all-releases').href = `https://github.com/${repo}/releases`
     }
 
     init().catch(() => toast('加载版本信息失败，请刷新页面'))
