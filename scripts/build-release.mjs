@@ -97,6 +97,18 @@ try {
   console.warn('⚠ Windows exe build failed:', e.message)
 }
 
+// 3b. Electron desktop exe (optional single-file)
+const electronExe = path.join(ROOT, 'releases/desktop', `LanShare-v${version}-desktop.exe`)
+try {
+  if (fs.existsSync(path.join(ROOT, 'desktop/node_modules/electron'))) {
+    run('npm run dist', { cwd: path.join(ROOT, 'desktop') })
+  } else {
+    console.warn('⚠ Electron 未安装，跳过 desktop.exe（可在 desktop/ 运行 npm install && npm run dist）')
+  }
+} catch (e) {
+  console.warn('⚠ Electron build skipped:', e.message)
+}
+
 // 3. Server zip stage
 const serverStage = path.join(RELEASES, '.stage-server')
 if (fs.existsSync(serverStage)) fs.rmSync(serverStage, { recursive: true, force: true })
@@ -127,15 +139,21 @@ node server.mjs
 pause
 `)
 
-writeFile(path.join(serverStage, 'start-server.sh'), `#!/bin/sh
+writeFile(path.join(serverStage, 'start-server.sh'), `#!/bin/bash
 cd "$(dirname "$0")"
 [ -d node_modules/busboy ] || npm install --omit=dev >/dev/null 2>&1
 mkdir -p shared uploads
 echo ""
-echo "  LanShare Server v${version}"
+echo "  LanShare Server v${version} (macOS / Linux)"
 echo "  Phone: http://YOUR_PC_IP:8787"
 echo ""
 exec node server.mjs
+`)
+
+writeFile(path.join(serverStage, 'start-server.command'), `#!/bin/bash
+cd "$(dirname "$0")"
+chmod +x start-server.sh 2>/dev/null
+./start-server.sh
 `)
 
 const isWin = process.platform === 'win32'
@@ -152,14 +170,28 @@ ensureDir(RELEASES)
 const artifacts = []
 
 const apkOut = path.join(RELEASES, `${TAG}-android.apk`)
-if (copyFile(apkSrc, apkOut)) artifacts.push(path.basename(apkOut))
+const apkPhone = path.join(RELEASES, `${TAG}-android-phone.apk`)
+const apkTablet = path.join(RELEASES, `${TAG}-android-tablet.apk`)
+if (copyFile(apkSrc, apkOut)) {
+  artifacts.push(path.basename(apkOut))
+  copyFile(apkOut, apkPhone) && artifacts.push(path.basename(apkPhone))
+  copyFile(apkOut, apkTablet) && artifacts.push(path.basename(apkTablet))
+}
 
 const portableZip = path.join(RELEASES, `${TAG}-windows-portable.zip`)
+const winZipOut = path.join(RELEASES, `${TAG}-windows.zip`)
 if (fs.existsSync(portableZip)) {
   copyFile(portableZip, path.join(archiveDir, path.basename(portableZip)))
   artifacts.push(path.basename(portableZip))
+  copyFile(portableZip, winZipOut) && artifacts.push(path.basename(winZipOut))
 }
-// 删除无效的单文件 exe（必须用 portable zip）
+
+if (fs.existsSync(electronExe)) {
+  const electronOut = path.join(RELEASES, `${TAG}-windows-desktop.exe`)
+  copyFile(electronExe, electronOut) && artifacts.push(path.basename(electronOut))
+}
+
+// portable zip 内已有 LanShare.exe，不再单独发布无效单文件
 const badExe = path.join(RELEASES, `${TAG}-windows-x64.exe`)
 if (fs.existsSync(badExe)) fs.unlinkSync(badExe)
 
@@ -167,28 +199,53 @@ const winZip = path.join(RELEASES, `${TAG}-server-windows-x64.zip`)
 zipDir(serverStage, winZip)
 artifacts.push(path.basename(winZip))
 
-const linuxTar = path.join(RELEASES, `${TAG}-server-linux-x64.tar.gz`)
+const linuxTar = path.join(RELEASES, `${TAG}-linux-x64.tar.gz`)
 try {
   run(`tar -czf "${linuxTar}" -C "${serverStage}" .`)
   artifacts.push(path.basename(linuxTar))
 } catch {
-  copyFile(winZip, path.join(RELEASES, `${TAG}-server-linux-x64.zip`))
-  artifacts.push(`${TAG}-server-linux-x64.zip`)
+  const linuxZip = path.join(RELEASES, `${TAG}-linux-x64.zip`)
+  copyFile(winZip, linuxZip)
+  artifacts.push(path.basename(linuxZip))
 }
 
-const macZip = path.join(RELEASES, `${TAG}-server-macos.zip`)
-copyFile(winZip, macZip)
-artifacts.push(path.basename(macZip))
+const macTar = path.join(RELEASES, `${TAG}-macos-x64.tar.gz`)
+try {
+  run(`tar -czf "${macTar}" -C "${serverStage}" .`)
+  artifacts.push(path.basename(macTar))
+} catch {
+  copyFile(winZip, path.join(RELEASES, `${TAG}-macos-x64.zip`))
+  artifacts.push(`${TAG}-macos-x64.zip`)
+}
 
-writeFile(path.join(RELEASES, `${TAG}-ios-pwa.txt`), `LanShare v${version} — iPhone / iPad (PWA)
+writeFile(path.join(RELEASES, `${TAG}-ios-iphone.txt`), `LanShare v${version} — iPhone 安装
 ==========================================
 
-1. Start LanShare on PC (run .exe or start-server script)
-2. Same WiFi → Safari open http://YOUR_PC_IP:8787
-3. Share → Add to Home Screen
+方式一：App（推荐 Android 用户用 APK；iPhone 暂用 PWA）
+1. 电脑运行 LanShare.exe（Windows 解压 zip 后双击）
+2. 同一 WiFi → iPhone Safari 打开 http://电脑IP:8787
+3. 分享 → 添加到主屏幕 → 像 App 一样使用
+
+方式二：TestFlight / App Store
+- 开发中，请关注 GitHub Release 更新
 `)
 
-artifacts.push(`${TAG}-ios-pwa.txt`)
+writeFile(path.join(RELEASES, `${TAG}-ios-ipad.txt`), `LanShare v${version} — iPad 安装
+==========================================
+
+1. Mac/Windows 电脑运行 LanShare 服务端
+2. 同一 WiFi → iPad Safari 打开 http://电脑IP:8787
+3. 分享 → 添加到主屏幕
+4. 界面会自动识别为「平板」，紫色主题
+
+横屏使用体验更佳。
+`)
+
+writeFile(path.join(RELEASES, `${TAG}-ios-pwa.txt`), `LanShare v${version} — iPhone / iPad (PWA)
+详见 ios-iphone.txt 与 ios-ipad.txt
+`)
+
+artifacts.push(`${TAG}-ios-iphone.txt`, `${TAG}-ios-ipad.txt`, `${TAG}-ios-pwa.txt`)
 
 // 4. Archive this version (never delete old archives)
 ensureDir(archiveDir)

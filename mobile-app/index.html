@@ -38,6 +38,7 @@
           </div>
           <h1>电脑互传</h1>
           <p>同一 WiFi，手机与电脑互传文件</p>
+          <div id="client-device-badge" class="client-device-badge" aria-live="polite"></div>
         </div>
 
         <div id="ad-setup" class="ad-slot hidden" aria-label="推荐"></div>
@@ -103,10 +104,11 @@
       <div class="settings-scroll">
         <div class="settings-section">
           <h3>本机设备</h3>
-          <p class="settings-desc">给本机取个名字，方便其他设备识别</p>
+          <p class="settings-desc">自动识别设备类型与品牌，与系统保持一致</p>
+          <div id="detected-device-card" class="detected-device-card"></div>
           <label class="field">
             <span>设备名称</span>
-            <input id="set-device-name" type="text" placeholder="例如：小明的手机" maxlength="32" />
+            <input id="set-device-name" type="text" placeholder="自动识别，可修改" maxlength="32" />
           </label>
           <label class="field">
             <span>设备类型</span>
@@ -116,6 +118,7 @@
               <option value="desktop">电脑</option>
             </select>
           </label>
+          <p id="device-type-hint" class="settings-hint"></p>
         </div>
 
         <div class="settings-section">
@@ -134,6 +137,7 @@
 
         <div id="server-settings-panel" class="settings-section hidden">
           <h3>服务端路径 <span class="badge-type desktop">电脑</span></h3>
+          <p id="server-device-info" class="settings-desc">本机设备信息</p>
           <p class="settings-desc">其他设备发来的文件 → 接收目录；共享给对方 → 共享目录</p>
           <label class="field">
             <span>接收目录（uploads）</span>

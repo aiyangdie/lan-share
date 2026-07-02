@@ -265,6 +265,8 @@ const server = http.createServer(async (req, res) => {
         hostname: os.hostname(),
         deviceName: s.deviceName,
         deviceType: s.deviceType,
+        deviceBrand: s.deviceBrand || '',
+        deviceModel: s.deviceModel || '',
         time: Date.now(),
       })
     }
@@ -277,6 +279,8 @@ const server = http.createServer(async (req, res) => {
           port: s.port,
           deviceName: s.deviceName,
           deviceType: s.deviceType,
+          deviceBrand: s.deviceBrand || '',
+          deviceModel: s.deviceModel || '',
           uploadDir: s.uploadDir,
           sharedDir: s.sharedDir,
           autoSaveIncoming: s.autoSaveIncoming,
@@ -299,6 +303,8 @@ const server = http.createServer(async (req, res) => {
             port: next.port,
             deviceName: next.deviceName,
             deviceType: next.deviceType,
+            deviceBrand: next.deviceBrand || '',
+            deviceModel: next.deviceModel || '',
             uploadDir: next.uploadDir,
             sharedDir: next.sharedDir,
             autoSaveIncoming: next.autoSaveIncoming,
@@ -325,6 +331,8 @@ const server = http.createServer(async (req, res) => {
         hostname: os.hostname(),
         deviceName: s.deviceName,
         deviceType: s.deviceType,
+        deviceBrand: s.deviceBrand || '',
+        deviceModel: s.deviceModel || '',
         ...extra,
       }
     }

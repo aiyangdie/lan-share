@@ -2,6 +2,8 @@ package com.lanshare.app;
 
 import android.app.DownloadManager;
 import android.content.Context;
+import android.content.res.Configuration;
+import android.os.Build;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -98,6 +100,49 @@ public class DiscoveryBridge {
         } catch (Exception e) {
             return "";
         }
+    }
+
+    @JavascriptInterface
+    public String getDeviceInfo() {
+        try {
+            JSONObject info = new JSONObject();
+            String manufacturer = Build.MANUFACTURER != null ? Build.MANUFACTURER : "";
+            String model = Build.MODEL != null ? Build.MODEL : "";
+            String brand = capitalizeBrand(manufacturer);
+            String deviceType = detectAndroidDeviceType();
+            String deviceName = (brand + " " + model).trim();
+            if (deviceName.length() > 32) deviceName = deviceName.substring(0, 32);
+            info.put("deviceBrand", brand);
+            info.put("deviceModel", model);
+            info.put("deviceType", deviceType);
+            info.put("deviceName", deviceName.isEmpty() ? model : deviceName);
+            return info.toString();
+        } catch (Exception e) {
+            return "{}";
+        }
+    }
+
+    private String detectAndroidDeviceType() {
+        Configuration cfg = context.getResources().getConfiguration();
+        if (cfg.smallestScreenWidthDp >= 600) return "tablet";
+        return "phone";
+    }
+
+    private String capitalizeBrand(String raw) {
+        if (raw == null || raw.isEmpty()) return "";
+        String lower = raw.toLowerCase();
+        if (lower.contains("huawei")) return "华为";
+        if (lower.contains("honor")) return "荣耀";
+        if (lower.contains("redmi")) return "红米";
+        if (lower.contains("xiaomi")) return "小米";
+        if (lower.contains("oppo")) return "OPPO";
+        if (lower.contains("vivo")) return "vivo";
+        if (lower.contains("samsung")) return "三星";
+        if (lower.contains("oneplus")) return "一加";
+        if (lower.contains("google")) return "Google";
+        if (lower.contains("meizu")) return "魅族";
+        if (lower.contains("sony")) return "索尼";
+        return raw.substring(0, 1).toUpperCase() + raw.substring(1);
     }
 
     @JavascriptInterface
@@ -206,6 +251,8 @@ public class DiscoveryBridge {
             out.put("hostname", j.optString("hostname", ip));
             out.put("deviceName", j.optString("deviceName", j.optString("hostname", ip)));
             out.put("deviceType", j.optString("deviceType", "desktop"));
+            out.put("deviceBrand", j.optString("deviceBrand", ""));
+            out.put("deviceModel", j.optString("deviceModel", ""));
             out.put("seenAt", System.currentTimeMillis());
             return out;
         } catch (Exception e) {

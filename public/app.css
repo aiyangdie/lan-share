@@ -282,6 +282,64 @@ body { overflow-x: hidden; }
   gap: 6px;
   align-items: center;
 }
+.discover-sub-ip {
+  margin-top: 2px;
+  opacity: 0.85;
+}
+
+.brand-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--brand-color, #64748B);
+  background: var(--brand-soft, rgba(100, 116, 139, 0.12));
+}
+.brand-chip.sm { padding: 1px 6px; font-size: 0.625rem; }
+
+.client-device-badge {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+}
+.client-device-badge .client-device-name {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.detected-device-card {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 4px;
+}
+.detected-device-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.detected-device-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.detected-device-text strong {
+  font-size: 0.9375rem;
+  color: var(--text);
+}
+.detected-device-text span {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
 .device-badge {
   font-size: 0.6875rem;
   font-weight: 600;

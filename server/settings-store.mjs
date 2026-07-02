@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { fileURLToPath } from 'node:url'
+import { detectHostDeviceInfo } from './device-info.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -16,11 +17,14 @@ export function getDataBase() {
 const SETTINGS_FILE = () => process.env.SETTINGS_FILE || path.join(getDataBase(), 'settings.json')
 
 export function defaultSettings(dataBase = getDataBase()) {
+  const host = detectHostDeviceInfo()
   return {
-    version: 2,
+    version: 3,
     port: 8787,
-    deviceName: os.hostname(),
-    deviceType: 'desktop',
+    deviceName: host.deviceName,
+    deviceType: host.deviceType,
+    deviceBrand: host.deviceBrand,
+    deviceModel: host.deviceModel,
     uploadDir: path.join(dataBase, 'uploads'),
     sharedDir: path.join(dataBase, 'shared'),
     autoSaveIncoming: true,
@@ -39,11 +43,20 @@ function normalizeDeviceType(t) {
 function normalizeSettings(raw, dataBase) {
   const base = defaultSettings(dataBase)
   const merged = { ...base, ...raw }
+  const host = detectHostDeviceInfo()
+  const deviceBrand = String(merged.deviceBrand || '').trim() || host.deviceBrand
+  const deviceModel = String(merged.deviceModel || '').trim() || host.deviceModel
+  let deviceName = String(merged.deviceName || base.deviceName).slice(0, 32)
+  if (deviceName === os.hostname() && host.deviceName && host.deviceName !== deviceName) {
+    deviceName = host.deviceName.slice(0, 32)
+  }
   return {
-    version: 2,
+    version: 3,
     port: Math.min(65535, Math.max(1024, Number(merged.port) || 8787)),
-    deviceName: String(merged.deviceName || base.deviceName).slice(0, 32),
-    deviceType: normalizeDeviceType(merged.deviceType),
+    deviceName,
+    deviceType: normalizeDeviceType(merged.deviceType || host.deviceType),
+    deviceBrand: String(deviceBrand).slice(0, 32),
+    deviceModel: String(deviceModel).slice(0, 64),
     uploadDir: String(merged.uploadDir || base.uploadDir),
     sharedDir: String(merged.sharedDir || base.sharedDir),
     autoSaveIncoming: merged.autoSaveIncoming !== false,
@@ -99,6 +112,8 @@ export function devicePayload(settings) {
   return {
     deviceName: s.deviceName,
     deviceType: s.deviceType,
+    deviceBrand: s.deviceBrand || '',
+    deviceModel: s.deviceModel || '',
   }
 }
 

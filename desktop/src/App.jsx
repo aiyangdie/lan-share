@@ -51,10 +51,11 @@ export default function App() {
           <span>设备类型</span>
           <select value={form.deviceType || 'desktop'} onChange={(e) => set('deviceType', e.target.value)}>
             <option value="desktop">电脑</option>
-            <option value="phone">手机</option>
-            <option value="tablet">平板</option>
           </select>
         </label>
+        {(form.deviceBrand || form.deviceModel) && (
+          <p className="muted">已识别：{[form.deviceBrand, form.deviceModel].filter(Boolean).join(' · ')}</p>
+        )}
       </section>
 
       <section className="card">

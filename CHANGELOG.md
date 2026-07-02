@@ -4,6 +4,8 @@ All notable changes are documented here. **Old release packages are kept in `rel
 
 ## 细粒度更新留痕
 
+- **1.5.003** (2026-07-02) — 设备品牌识别、类型自动匹配、全平台安装包优化
+
 - **1.5.002** (2026-07-02) — v1.6 系统设置：设备名/类型/路径/LocalSend风格UI
 
 - **1.5.001** (2026-07-02) — 综合修复：IP/设置/发现/传输/同步/Electron重启/admin版本号

@@ -72,7 +72,21 @@ cpDir(path.join(ROOT, 'admin'), path.join(stage, 'admin'))
 ensureDir(path.join(stage, 'shared'))
 ensureDir(path.join(stage, 'uploads'))
 
-fs.writeFileSync(path.join(stage, '使用说明.txt'), `LanShare v${version}\n\n双击 LanShare.exe 启动\n手机连接 http://你的电脑IP:8787\n广告后台 http://你的电脑IP:8787/admin\n默认密码 lanshare2026（可用 ADMIN_PASSWORD 环境变量修改）\n`)
+fs.writeFileSync(path.join(stage, '使用说明.txt'), `LanShare v${version} — Windows 电脑版
+==========================================
+
+【使用方法】
+1. 解压本 zip 到任意文件夹（如 D:\\LanShare）
+2. 双击 LanShare.exe 启动（无需安装 Node.js）
+3. 浏览器会自动打开；手机安装 APK 后同一 WiFi 可自动发现本电脑
+
+【包含文件】
+- LanShare.exe   ← 双击这个启动
+- node\\node.exe  内置运行环境
+- server.mjs      服务程序
+
+下载 APK：https://github.com/aiyangdie/lan-share/releases
+`)
 fs.writeFileSync(path.join(stage, 'start-server.bat'), `@echo off\r\nchcp 65001 >nul\r\ncd /d "%~dp0"\r\nnode\\node.exe server.mjs\r\npause\r\n`)
 
 const csc = 'C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe'

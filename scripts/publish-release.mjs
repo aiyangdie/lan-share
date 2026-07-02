@@ -93,10 +93,16 @@ function uploadAsset(uploadUrl, filePath, token) {
 function collectAssets() {
   const names = [
     `lan-share-v${version}-android.apk`,
+    `lan-share-v${version}-android-phone.apk`,
+    `lan-share-v${version}-android-tablet.apk`,
     `lan-share-v${version}-windows-portable.zip`,
+    `lan-share-v${version}-windows.zip`,
+    `lan-share-v${version}-windows-desktop.exe`,
     `lan-share-v${version}-server-windows-x64.zip`,
-    `lan-share-v${version}-server-linux-x64.tar.gz`,
-    `lan-share-v${version}-server-macos.zip`,
+    `lan-share-v${version}-linux-x64.tar.gz`,
+    `lan-share-v${version}-macos-x64.tar.gz`,
+    `lan-share-v${version}-ios-iphone.txt`,
+    `lan-share-v${version}-ios-ipad.txt`,
     `lan-share-v${version}-ios-pwa.txt`,
   ]
   const files = []

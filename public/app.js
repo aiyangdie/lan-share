@@ -160,6 +160,8 @@ async function probeServer(ip, port = DEFAULT_HTTP_PORT) {
         hostname: j.hostname || ip,
         deviceName: j.deviceName || j.hostname || ip,
         deviceType: j.deviceType || 'desktop',
+        deviceBrand: j.deviceBrand || '',
+        deviceModel: j.deviceModel || '',
       }
     }
     return null
@@ -188,8 +190,9 @@ async function scanSubnetClient(base) {
 function renderDiscoverList(peers) {
   const list = $('#discover-list')
   const D = window.LanShareDevice
+  const ctx = D?.clientContextMeta?.() || D?.deviceMeta?.('phone')
   if (!peers.length) {
-    list.innerHTML = '<div class="discover-empty">未发现设备，请确认对方已打开 LanShare 且在同一 WiFi</div>'
+    list.innerHTML = `<div class="discover-empty">${escapeHtml(ctx.emptyHint || '未发现设备')}</div>`
     $('#setup-help').classList.remove('hidden')
     return
   }
@@ -198,7 +201,10 @@ function renderDiscoverList(peers) {
   for (const peer of peers) {
     const type = D.peerDeviceType(peer)
     const meta = D.deviceMeta(type)
+    const brandMeta = D.brandMeta(D.peerDeviceBrand(peer))
     const name = D.deviceDisplayName(peer)
+    const subtitle = D.peerDeviceSubtitle(peer)
+    const brand = D.peerDeviceBrand(peer)
     const btn = document.createElement('button')
     btn.type = 'button'
     btn.className = `discover-item type-${type}`
@@ -208,6 +214,10 @@ function renderDiscoverList(peers) {
         <div class="discover-name">${escapeHtml(name)}</div>
         <div class="discover-sub">
           <span class="device-badge ${type}">${meta.label}</span>
+          ${brand ? `<span class="brand-chip sm" style="--brand-color:${brandMeta.color};--brand-soft:${brandMeta.soft}">${escapeHtml(brand)}</span>` : ''}
+          <span>${escapeHtml(subtitle)}</span>
+        </div>
+        <div class="discover-sub discover-sub-ip">
           <span>${escapeHtml(peer.ip)}:${peer.port || DEFAULT_HTTP_PORT}</span>
           ${peer.version ? `<span>v${escapeHtml(peer.version)}</span>` : ''}
         </div>
@@ -234,13 +244,17 @@ function renderConnectedDevice(info) {
   const D = window.LanShareDevice
   const type = D.peerDeviceType(info)
   const meta = D.deviceMeta(type)
+  const brand = D.peerDeviceBrand(info)
+  const brandMeta = D.brandMeta(brand)
   const name = D.deviceDisplayName(info)
+  const subtitle = D.peerDeviceSubtitle(info)
   el.classList.remove('hidden')
   el.innerHTML = `
     <div class="discover-icon type-${type}">${meta.icon}</div>
     <div class="connected-device-meta">
       <strong>${escapeHtml(name)}</strong>
-      <span>${meta.label} · ${escapeHtml(info.ip)}:${info.port || DEFAULT_HTTP_PORT} · 已连接，发送即达</span>
+      <span>${escapeHtml(subtitle)} · ${escapeHtml(info.ip)}:${info.port || DEFAULT_HTTP_PORT} · 已连接</span>
+      ${brand ? `<span class="brand-chip sm" style="--brand-color:${brandMeta.color};--brand-soft:${brandMeta.soft}">${escapeHtml(brand)}</span>` : ''}
     </div>
     <button type="button" class="btn-link" id="btn-switch-device">换设备</button>
   `
@@ -375,10 +389,40 @@ async function connect(url) {
   return info
 }
 
+function applyClientContextUI() {
+  const D = window.LanShareDevice
+  if (!D) return
+  const ctx = D.clientContextMeta()
+  const client = window.LanShareSettings?.readClientSettings?.()
+  const brand = $('#client-device-badge')
+  if (brand && client) {
+    const bm = D.brandMeta(client.deviceBrand)
+    brand.className = `client-device-badge type-${client.deviceType}`
+    brand.innerHTML = `
+      <span class="device-badge ${client.deviceType}">${ctx.label}</span>
+      ${client.deviceBrand ? `<span class="brand-chip sm" style="--brand-color:${bm.color};--brand-soft:${bm.soft}">${escapeHtml(client.deviceBrand)}</span>` : ''}
+      <span class="client-device-name">${escapeHtml(window.LanShareSettings.clientDeviceName())}</span>
+    `
+  }
+  const title = $('.brand h1')
+  const desc = $('.brand p')
+  if (title) title.textContent = ctx.setupTitle || '电脑互传'
+  if (desc) desc.textContent = ctx.setupDesc || '同一 WiFi，手机与电脑互传文件'
+  document.documentElement.style.setProperty('--accent', ctx.color)
+  document.documentElement.style.setProperty('--accent-soft', ctx.soft)
+  const discoverSub = $('.discover-subtitle')
+  if (discoverSub) {
+    discoverSub.textContent = typeof isDesktopBrowser === 'function' && isDesktopBrowser()
+      ? '手机/平板安装 App 后可发现本电脑'
+      : '点选附近电脑即可连接并传输'
+  }
+}
+
 function showSetup() {
   $('#screen-setup').classList.remove('hidden')
   $('#screen-main').classList.add('hidden')
   $('#screen-settings')?.classList.add('hidden')
+  applyClientContextUI()
   const saved = server.replace(/^https?:\/\//, '')
   $('#input-server').value = saved || defaultServerHost()
   discoverServers()
@@ -870,5 +914,6 @@ setInterval(pollSharedIncoming, 4000)
     }
   }
   showSetup()
+  applyClientContextUI()
   discoverServers()
 })()

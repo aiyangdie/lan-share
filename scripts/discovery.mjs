@@ -37,6 +37,8 @@ export function startDiscovery({ port, version, getIp, getDeviceMeta = () => ({}
         hostname: os.hostname(),
         deviceName: meta.deviceName || os.hostname(),
         deviceType: meta.deviceType || 'desktop',
+        deviceBrand: meta.deviceBrand || '',
+        deviceModel: meta.deviceModel || '',
       }))
       try { socket.send(payload, 0, payload.length, DISCOVERY_PORT, '255.255.255.255') } catch { /* ignore */ }
       const parts = ip.split('.')
@@ -74,6 +76,8 @@ export function probeHealth(ip, port = 8787, timeoutMs = 900) {
               hostname: j.hostname || ip,
               deviceName: j.deviceName || j.hostname || ip,
               deviceType: j.deviceType || 'desktop',
+              deviceBrand: j.deviceBrand || '',
+              deviceModel: j.deviceModel || '',
             })
           } else resolve(null)
         } catch { resolve(null) }
