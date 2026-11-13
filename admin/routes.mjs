@@ -19,7 +19,10 @@ const DATA_DIR = path.join(ADMIN_DIR, 'data')
 const PUBLIC_DIR = path.join(ADMIN_DIR, 'public')
 const ADS_FILE = path.join(DATA_DIR, 'ads.json')
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'lanshare2026'
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || crypto.randomBytes(16).toString('hex')
+if (!process.env.ADMIN_PASSWORD) {
+  console.warn(`[admin] ADMIN_PASSWORD 未设置，已生成随机密码：${ADMIN_PASSWORD}`)
+}
 const sessions = new Map()
 
 const MIME = {
