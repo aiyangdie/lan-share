@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/covers/17-lan-share.jpg" alt="lan-share 项目封面" width="100%"></p>
+
 <h1 align="center">LanShare · 电脑互传</h1>
 
 <p align="center">
